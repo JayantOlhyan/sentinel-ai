@@ -39,6 +39,9 @@ else:
 class AnalyzeRequest(BaseModel):
     message: str = Field(..., description="The text message (SMS, email, WhatsApp) to analyze")
 
+class AnalyzeUrlRequest(BaseModel):
+    url: str = Field(..., description="The URL to analyze for phishing or scams")
+
 class AnalyzeResponse(BaseModel):
     risk_score: int = Field(..., description="Scam probability score (0-100%)", ge=0, le=100)
     classification: str = Field(..., description="Classification (Safe, Suspicious, Scam)")
@@ -174,4 +177,49 @@ async def analyze_image(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Error calling Gemini API for image: {e}")
         raise HTTPException(status_code=500, detail=f"Error analyzing image: {str(e)}")
+
+@app.post("/analyze-url", response_model=AnalyzeResponse)
+async def analyze_url(request: AnalyzeUrlRequest):
+    if not client:
+        raise HTTPException(
+            status_code=500, 
+            detail="Gemini API key is not configured on the server."
+        )
+
+    try:
+        url_prompt = f"""
+        Analyze the following URL for phishing, typosquatting (e.g., g0ogle.com instead of google.com), known malicious domains, suspicious query parameters, or scam structures:
+        URL: {request.url}
+        
+        Provide a risk score and classification. If it looks suspicious or is a known bad domain, penalize it heavily.
+        """
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=url_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+                response_schema={
+                    "type": "OBJECT",
+                    "properties": {
+                        "risk_score": {"type": "INTEGER"},
+                        "classification": {"type": "STRING"},
+                        "explanation": {"type": "STRING"},
+                        "recommended_action": {"type": "STRING"}
+                    },
+                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                },
+                temperature=0.1,
+            ),
+        )
+
+        import json
+        result = json.loads(response.text)
+        return AnalyzeResponse(**result)
+
+    except Exception as e:
+        print(f"Error calling Gemini API for URL: {e}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing URL: {str(e)}")
+
 

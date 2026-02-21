@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef } from 'react';
-import { 
-  Shield, AlertTriangle, ShieldAlert, Send, 
-  Loader2, Info, UploadCloud, MessageSquare, 
+import {
+  Shield, AlertTriangle, ShieldAlert, Send,
+  Loader2, Info, UploadCloud, MessageSquare,
   Phone, Link as LinkIcon, Video, IndianRupee,
   Cpu, CheckCircle2, Github, Twitter, Mail
 } from 'lucide-react';
@@ -17,13 +17,14 @@ interface AnalyzeResponse {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'message' | 'call' | 'url'>('message');
-  
+
   // Analysis State
   const [inputType, setInputType] = useState<'text' | 'image'>('text');
   const [message, setMessage] = useState('');
+  const [url, setUrl] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export default function Home() {
       }
       setSelectedImage(file);
       setInputType('image');
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -50,6 +51,7 @@ export default function Home() {
 
   const clearInput = () => {
     setMessage('');
+    setUrl('');
     setSelectedImage(null);
     setImagePreview(null);
     setResult(null);
@@ -57,8 +59,9 @@ export default function Home() {
   };
 
   const handleAnalyze = async () => {
-    if (inputType === 'text' && !message.trim()) return;
-    if (inputType === 'image' && !selectedImage) return;
+    if (activeTab === 'message' && inputType === 'text' && !message.trim()) return;
+    if (activeTab === 'message' && inputType === 'image' && !selectedImage) return;
+    if (activeTab === 'url' && !url.trim()) return;
 
     setIsAnalyzing(true);
     setError(null);
@@ -66,20 +69,30 @@ export default function Home() {
 
     try {
       let response;
-      
-      if (inputType === 'text') {
-        response = await fetch('http://localhost:8000/analyze', {
+
+      if (activeTab === 'message') {
+        if (inputType === 'text') {
+          response = await fetch('http://localhost:8000/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message }),
+          });
+        } else {
+          const formData = new FormData();
+          formData.append('file', selectedImage as File);
+          response = await fetch('http://localhost:8000/analyze-image', {
+            method: 'POST',
+            body: formData,
+          });
+        }
+      } else if (activeTab === 'url') {
+        response = await fetch('http://localhost:8000/analyze-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message }),
+          body: JSON.stringify({ url }),
         });
       } else {
-        const formData = new FormData();
-        formData.append('file', selectedImage as File);
-        response = await fetch('http://localhost:8000/analyze-image', {
-          method: 'POST',
-          body: formData,
-        });
+        throw new Error("Tab not supported yet.");
       }
 
       if (!response.ok) {
@@ -110,7 +123,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-purple-500/30">
-      
+
       {/* --- NAVBAR --- */}
       <nav className="w-full flex items-center justify-between px-6 py-4 bg-[var(--color-cyber-nav)] border-b border-white/5 z-50 sticky top-0 backdrop-blur-md">
         <div className="flex items-center gap-2">
@@ -128,32 +141,32 @@ export default function Home() {
       </nav>
 
       <main className="flex-1 w-full relative">
-        
+
         {/* --- HERO SECTION --- */}
         <section className="relative w-full pt-20 pb-24 md:pt-32 md:pb-32 px-4 flex flex-col items-center justify-center text-center">
           {/* Glowing Background Blob */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] pointer-events-none" />
-          
+
           <div className="relative z-10 flex flex-col items-center">
             <div className="mb-6 relative">
               <Shield className="w-16 h-16 text-blue-400" strokeWidth={1.5} />
               <div className="absolute -top-2 -right-2 text-yellow-400 animate-pulse">✨</div>
             </div>
-            
+
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 max-w-4xl">
               AI-Powered Scam Detection <br className="hidden md:block" />
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-purple-600 bg-clip-text text-transparent">
                 in Real Time
               </span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-[var(--color-cyber-muted)] max-w-2xl mb-12">
               Protect yourself from SMS scams, voice frauds, deepfakes, and malicious URLs with cutting-edge AI technology
             </p>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
-              <button 
+              <button
                 onClick={() => { setActiveTab('message'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
                 className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.3)]
                   ${activeTab === 'message' ? 'bg-blue-600 text-white hover:bg-blue-500 scale-105' : 'bg-[var(--color-cyber-panel)] text-white hover:bg-blue-600/20'}
@@ -161,7 +174,7 @@ export default function Home() {
               >
                 Scan Message
               </button>
-              <button 
+              <button
                 onClick={() => { setActiveTab('call'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
                 className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-300
                   ${activeTab === 'call' ? 'bg-purple-500 text-white hover:bg-purple-400 scale-105 shadow-[0_0_20px_rgba(168,85,247,0.3)]' : 'bg-[var(--color-cyber-panel)] text-white hover:bg-purple-500/20'}
@@ -169,7 +182,7 @@ export default function Home() {
               >
                 Check Call
               </button>
-              <button 
+              <button
                 onClick={() => { setActiveTab('url'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
                 className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-300
                   ${activeTab === 'url' ? 'bg-slate-700 text-white hover:bg-slate-600 scale-105' : 'bg-[var(--color-cyber-panel)] text-[var(--color-cyber-muted)] hover:bg-slate-800'}
@@ -178,7 +191,7 @@ export default function Home() {
                 Analyze URL
               </button>
             </div>
-            
+
             {/* Scroll Indicator */}
             <div className="animate-bounce p-2 rounded-full border border-white/20">
               <div className="w-1.5 h-3 bg-white/50 rounded-full" />
@@ -195,14 +208,14 @@ export default function Home() {
               {activeTab === 'call' && <Phone className="w-6 h-6 text-purple-400" />}
               {activeTab === 'url' && <LinkIcon className="w-6 h-6 text-slate-400" />}
               <h2 className="text-2xl font-semibold">
-                {activeTab === 'message' ? 'Message & Image Scanner' : activeTab === 'call' ? 'Voice Call Analysis (Coming Soon)' : 'URL Safety Check (Coming Soon)'}
+                {activeTab === 'message' ? 'Message & Image Scanner' : activeTab === 'call' ? 'Voice Call Analysis (Coming Soon)' : 'URL Safety Scanner'}
               </h2>
             </div>
 
             {/* Input Area */}
             {activeTab === 'message' ? (
               <div className="flex flex-col gap-6">
-                
+
                 {/* Input Toggle */}
                 <div className="flex bg-[var(--color-cyber-nav)] p-1 rounded-lg w-fit border border-white/5">
                   <button onClick={() => setInputType('text')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${inputType === 'text' ? 'bg-[var(--color-cyber-panel)] text-white shadow' : 'text-gray-400 hover:text-white'}`}>Text</button>
@@ -224,7 +237,7 @@ export default function Home() {
                         <button onClick={clearInput} className="absolute top-2 right-2 bg-black/50 hover:bg-black p-2 rounded-full text-white backdrop-blur-sm transition-all">✕</button>
                       </div>
                     ) : (
-                      <div 
+                      <div
                         onClick={() => fileInputRef.current?.click()}
                         className="w-full h-48 md:h-64 border-2 border-dashed border-[var(--color-cyber-border)] hover:border-purple-500/50 hover:bg-purple-500/5 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all gap-3"
                       >
@@ -235,12 +248,12 @@ export default function Home() {
                         </div>
                       </div>
                     )}
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      onChange={handleImageUpload} 
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={handleImageUpload}
                     />
                   </div>
                 )}
@@ -251,9 +264,9 @@ export default function Home() {
                       <AlertTriangle className="w-4 h-4" /> {error}
                     </div>
                   ) : <div />}
-                  
+
                   <div className="flex gap-3 w-full sm:w-auto">
-                    {(message || selectedImage) && (
+                    {(message || url || selectedImage) && (
                       <button onClick={clearInput} className="px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 mt-auto">
                         Clear
                       </button>
@@ -268,11 +281,11 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Results Section */}
+                {/* Results Section for Message Area */}
                 {result && (
                   <div className="mt-8 pt-6 border-t border-[var(--color-cyber-border)] animate-in slide-in-from-bottom-4 fade-in duration-500">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                      
+
                       {/* Risk Score */}
                       <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
                         <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
@@ -280,7 +293,105 @@ export default function Home() {
                         <div className="relative w-28 h-28 flex items-center justify-center z-10">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                             <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-                            <circle 
+                            <circle
+                              cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
+                              strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
+                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-bold">{result.risk_score}</span>
+                            <span className="text-[10px] text-gray-500">%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Details */}
+                      <div className="md:col-span-3 flex flex-col gap-4">
+                        <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {result.classification === 'Safe' ? <Shield className="w-6 h-6 text-emerald-400" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6 text-amber-400" /> : <ShieldAlert className="w-6 h-6 text-rose-400" />}
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Status</p>
+                              <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
+                            </div>
+                          </div>
+                          <div className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest ${getClassificationColor(result.classification)}`}>
+                            {result.classification}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
+                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5">
+                            <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                              <Info className="w-4 h-4 text-blue-400" /> AI Explanation
+                            </h4>
+                            <p className="text-sm text-gray-400 leading-relaxed">{result.explanation}</p>
+                          </div>
+                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                              <CheckCircle2 className="w-4 h-4 text-purple-400" /> Recommended Action
+                            </h4>
+                            <p className="relative z-10 text-sm font-medium text-blue-100">{result.recommended_action}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : activeTab === 'url' ? (
+              <div className="flex flex-col gap-6">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <LinkIcon className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    className="w-full bg-[var(--color-cyber-nav)] border border-[var(--color-cyber-border)] text-white p-4 pl-12 rounded-xl outline-none focus:border-slate-500/50 transition-colors placeholder:text-gray-600 font-mono"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+                  {error ? (
+                    <div className="text-rose-400 text-sm flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 w-fit">
+                      <AlertTriangle className="w-4 h-4" /> {error}
+                    </div>
+                  ) : <div />}
+
+                  <div className="flex gap-3 w-full sm:w-auto">
+                    {url && (
+                      <button onClick={clearInput} className="px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 mt-auto">
+                        Clear
+                      </button>
+                    )}
+                    <button
+                      onClick={handleAnalyze}
+                      disabled={isAnalyzing || !url}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-8 py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(51,65,85,0.3)]"
+                    >
+                      {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Results Section for URL */}
+                {result && (
+                  <div className="mt-8 pt-6 border-t border-[var(--color-cyber-border)] animate-in slide-in-from-bottom-4 fade-in duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+                      {/* Risk Score */}
+                      <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
+                        <div className="relative w-28 h-28 flex items-center justify-center z-10">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                            <circle
                               cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                               strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
                               className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
@@ -331,7 +442,7 @@ export default function Home() {
             ) : (
               <div className="py-20 flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10">
-                  {activeTab === 'call' ? <Phone className="w-8 h-8 text-purple-500" /> : <LinkIcon className="w-8 h-8 text-slate-500" />}
+                  <Phone className="w-8 h-8 text-purple-500" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">Coming Soon</h3>
                 <p className="text-gray-400 max-w-sm">This feature is currently under active development. Stay tuned for updates!</p>
@@ -344,7 +455,7 @@ export default function Home() {
         <section className="w-full max-w-6xl mx-auto px-4 py-20 text-center">
           <h2 className="text-4xl font-bold mb-3">The Growing Threat</h2>
           <p className="text-gray-400 mb-12">Digital scams are costing Indians billions every year</p>
-          
+
           <div className="glass-panel p-8 md:p-12 rounded-2xl mb-8 relative overflow-hidden border-rose-500/20">
             <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent" />
             <div className="relative z-10">
@@ -408,10 +519,10 @@ export default function Home() {
         <section className="w-full max-w-5xl mx-auto px-4 py-20 text-center">
           <h2 className="text-4xl font-bold mb-3">How It Works</h2>
           <p className="text-gray-400 mb-16">Protection in three simple steps</p>
-          
+
           <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-4 relative">
             <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-px bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 opacity-50 z-0" />
-            
+
             {[
               { num: 1, title: 'User Input', desc: 'Submit your message, call recording, URL, or image for analysis.', color: 'from-blue-600 to-blue-400', shadow: 'shadow-blue-500/30' },
               { num: 2, title: 'AI Analysis', desc: 'Our advanced AI models scan for patterns, anomalies, and scam indicators.', color: 'from-purple-600 to-purple-400', shadow: 'shadow-purple-500/30' },
@@ -426,8 +537,8 @@ export default function Home() {
               </div>
             ))}
           </div>
-          
-          <button 
+
+          <button
             onClick={() => { setActiveTab('message'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
             className="mt-16 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full font-bold shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-105 transition-all"
           >
@@ -447,12 +558,12 @@ export default function Home() {
             </div>
             <p className="text-sm text-gray-500 mb-6">AI-powered protection against digital scams and fraud. Built for the safety of our digital citizens.</p>
             <div className="flex gap-4">
-              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Github className="w-5 h-5"/></button>
-              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Twitter className="w-5 h-5"/></button>
-              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Mail className="w-5 h-5"/></button>
+              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Github className="w-5 h-5" /></button>
+              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Twitter className="w-5 h-5" /></button>
+              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Mail className="w-5 h-5" /></button>
             </div>
           </div>
-          
+
           <div className="flex-1 max-w-xl">
             <h4 className="text-white font-bold mb-6">Our Team</h4>
             <div className="grid grid-cols-2 gap-y-6 gap-x-4">
@@ -485,7 +596,7 @@ export default function Home() {
             </ul>
           </div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between pt-8 border-t border-white/5 text-xs text-gray-600 gap-4">
           <p>© 2026 ScamShield. All rights reserved. Built with ❤️ in India.</p>
           <div className="flex gap-4">

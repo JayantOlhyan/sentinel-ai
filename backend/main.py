@@ -244,7 +244,7 @@ async def analyze_audio(file: UploadFile = File(...)):
         )
         
         prompt = """
-        Listen to this audio recording of a phone call. Transcribe the conversation internally and analyze it for scams or fraud. Look specifically for:
+        Analyze the attached audio conversation for potential scams or fraud. Look specifically for:
         1. Voice Phishing (Vishing): Attackers impersonating bank officials, police, or tech support.
         2. Financial Threats: Urgent demands for money, OTPs, CVV, or passwords.
         3. Fake Urgency: Claims that an account will be locked or an arrest warrant is out.

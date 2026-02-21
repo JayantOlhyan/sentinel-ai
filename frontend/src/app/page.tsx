@@ -156,7 +156,12 @@ export default function Home() {
     };
 
     recognition.onerror = (event: any) => {
-      console.error(event.error);
+      if (event.error === 'network') {
+        setError("Network error: Chrome requires an active internet connection to process speech, or there was a connection drop.");
+      } else if (event.error === 'not-allowed') {
+        setError("Microphone access denied. Please allow microphone permissions.");
+      }
+      setIsLiveMonitoring(false);
     };
 
     recognition.start();

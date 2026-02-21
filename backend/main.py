@@ -222,4 +222,61 @@ async def analyze_url(request: AnalyzeUrlRequest):
         print(f"Error calling Gemini API for URL: {e}")
         raise HTTPException(status_code=500, detail=f"Error analyzing URL: {str(e)}")
 
+@app.post("/analyze-audio", response_model=AnalyzeResponse)
+async def analyze_audio(file: UploadFile = File(...)):
+    if not client:
+        raise HTTPException(
+            status_code=500, 
+            detail="Gemini API key is not configured on the server."
+        )
+
+    try:
+        # Read the audio bytes
+        audio_data = await file.read()
+        
+        # Prepare the audio part for Gemini (usually audio/webm or audio/wav from browser)
+        audio_part = types.Part.from_bytes(
+            data=audio_data,
+            mime_type=file.content_type if file.content_type else "audio/webm"
+        )
+        
+        prompt = """
+        Listen to this audio recording of a phone call. Transcribe the conversation internally and analyze it for scams or fraud. Look specifically for:
+        1. Voice Phishing (Vishing): Attackers impersonating bank officials, police, or tech support.
+        2. Financial Threats: Urgent demands for money, OTPs, CVV, or passwords.
+        3. Fake Urgency: Claims that an account will be locked or an arrest warrant is out.
+        4. Deepfakes/AI Voice: Anomalies in the voice tone, robotic inflections, or unnatural pauses that might indicate the voice is AI-generated or cloned.
+        
+        Provide the standard risk_score, classification, explanation, and recommended_action based on your analysis of the audio conversation.
+        """
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[prompt, audio_part],
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+                response_schema={
+                    "type": "OBJECT",
+                    "properties": {
+                        "risk_score": {"type": "INTEGER"},
+                        "classification": {"type": "STRING"},
+                        "explanation": {"type": "STRING"},
+                        "recommended_action": {"type": "STRING"}
+                    },
+                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                },
+                temperature=0.1,
+            ),
+        )
+
+        import json
+        result = json.loads(response.text)
+        return AnalyzeResponse(**result)
+
+    except Exception as e:
+        print(f"Error calling Gemini API for audio: {e}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing audio: {str(e)}")
+
+
 

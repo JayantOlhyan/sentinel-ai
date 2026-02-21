@@ -5,7 +5,8 @@ import {
   Shield, AlertTriangle, ShieldAlert, Send,
   Loader2, Info, UploadCloud, MessageSquare,
   Phone, Link as LinkIcon, Video, IndianRupee,
-  Cpu, CheckCircle2, Github, Twitter, Mail
+  Cpu, CheckCircle2, Github, Twitter, Mail,
+  Mic, Square, Play, Trash2
 } from 'lucide-react';
 
 interface AnalyzeResponse {
@@ -24,6 +25,15 @@ export default function Home() {
   const [url, setUrl] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // Audio Recording State
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioURL, setAudioURL] = useState<string | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
@@ -49,11 +59,55 @@ export default function Home() {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        setAudioURL(URL.createObjectURL(audioBlob));
+        stream.getTracks().forEach(track => track.stop()); // Stop microphone access
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      setResult(null);
+      setError(null);
+
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+    } catch (err: any) {
+      setError("Microphone access denied or not available. Please allow microphone permissions.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    }
+  };
+
   const clearInput = () => {
     setMessage('');
     setUrl('');
     setSelectedImage(null);
     setImagePreview(null);
+    setAudioBlob(null);
+    setAudioURL(null);
+    setRecordingTime(0);
     setResult(null);
     setError(null);
   };
@@ -90,6 +144,13 @@ export default function Home() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url }),
+        });
+      } else if (activeTab === 'call') {
+        const formData = new FormData();
+        formData.append('file', audioBlob as Blob, "recording.webm");
+        response = await fetch('http://localhost:8000/analyze-audio', {
+          method: 'POST',
+          body: formData,
         });
       } else {
         throw new Error("Tab not supported yet.");
@@ -208,7 +269,7 @@ export default function Home() {
               {activeTab === 'call' && <Phone className="w-6 h-6 text-purple-400" />}
               {activeTab === 'url' && <LinkIcon className="w-6 h-6 text-slate-400" />}
               <h2 className="text-2xl font-semibold">
-                {activeTab === 'message' ? 'Message & Image Scanner' : activeTab === 'call' ? 'Voice Call Analysis (Coming Soon)' : 'URL Safety Scanner'}
+                {activeTab === 'message' ? 'Message & Image Scanner' : activeTab === 'call' ? 'Voice Call Analysis' : 'URL Safety Scanner'}
               </h2>
             </div>
 
@@ -385,6 +446,135 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
                       {/* Risk Score */}
+                      <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
+                        <div className="relative w-28 h-28 flex items-center justify-center z-10">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                            <circle
+                              cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
+                              strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
+                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-bold">{result.risk_score}</span>
+                            <span className="text-[10px] text-gray-500">%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Details */}
+                      <div className="md:col-span-3 flex flex-col gap-4">
+                        <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {result.classification === 'Safe' ? <Shield className="w-6 h-6 text-emerald-400" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6 text-amber-400" /> : <ShieldAlert className="w-6 h-6 text-rose-400" />}
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Status</p>
+                              <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
+                            </div>
+                          </div>
+                          <div className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest ${getClassificationColor(result.classification)}`}>
+                            {result.classification}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
+                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5">
+                            <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                              <Info className="w-4 h-4 text-blue-400" /> AI Explanation
+                            </h4>
+                            <p className="text-sm text-gray-400 leading-relaxed">{result.explanation}</p>
+                          </div>
+                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                              <CheckCircle2 className="w-4 h-4 text-purple-400" /> Recommended Action
+                            </h4>
+                            <p className="relative z-10 text-sm font-medium text-blue-100">{result.recommended_action}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : activeTab === 'call' ? (
+              <div className="flex flex-col gap-6 items-center">
+
+                <div className="w-full flex flex-col items-center justify-center p-8 border-2 border-[var(--color-cyber-border)] rounded-2xl bg-[var(--color-cyber-nav)] transition-all">
+
+                  {audioURL ? (
+                    <div className="w-full flex items-center justify-between gap-4 bg-[var(--color-cyber-panel)] p-4 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400">
+                          <Play className="w-5 h-5 ml-1" />
+                        </div>
+                        <audio src={audioURL} controls className="w-full max-w-[300px] h-10 outline-none" />
+                      </div>
+                      <button onClick={clearInput} className="p-2 text-gray-500 hover:text-rose-400 transition-colors tooltip" aria-label="Delete recording">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-6 py-4">
+                      <div className={`relative flex items-center justify-center ${isRecording ? 'animate-pulse' : ''}`}>
+                        {isRecording && <div className="absolute inset-0 bg-rose-500 rounded-full blur-xl opacity-30 animate-pulse" />}
+                        <button
+                          onClick={isRecording ? stopRecording : startRecording}
+                          className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all ${isRecording
+                            ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
+                            : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
+                            }`}
+                        >
+                          {isRecording ? <Square className="w-8 h-8 text-white fill-white" /> : <Mic className="w-10 h-10 text-white" />}
+                        </button>
+                      </div>
+
+                      <div className="text-center">
+                        {isRecording ? (
+                          <>
+                            <h3 className="text-rose-400 font-bold text-xl drop-shadow-[0_0_10px_rgba(244,63,94,0.5)]">
+                              Recording... {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+                            </h3>
+                            <p className="text-gray-400 text-sm mt-2">Hold your device near the speaker to capture the call.</p>
+                          </>
+                        ) : (
+                          <>
+                            <h3 className="text-white font-bold text-lg">Click to Start Recording</h3>
+                            <p className="text-gray-400 text-sm mt-2">Put your phone on speaker to record a suspicious call.</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+                  {error ? (
+                    <div className="text-rose-400 text-sm flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 w-fit">
+                      <AlertTriangle className="w-4 h-4" /> {error}
+                    </div>
+                  ) : <div />}
+
+                  <div className="flex gap-3 w-full sm:w-auto">
+                    {/* Only show analyze button if there is a recorded blob */}
+                    <button
+                      onClick={handleAnalyze}
+                      disabled={isAnalyzing || !audioBlob || isRecording}
+                      className="w-full sm:w-48 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 text-white px-8 py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                    >
+                      {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Results Section for Voice Call */}
+                {result && (
+                  <div className="mt-8 pt-6 border-t border-[var(--color-cyber-border)] animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      {/* ... risk score rings (reuse) ... */}
                       <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
                         <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
                         <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>

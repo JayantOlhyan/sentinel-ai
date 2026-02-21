@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from google import genai
@@ -109,3 +109,59 @@ async def analyze_message(request: AnalyzeRequest):
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
         raise HTTPException(status_code=500, detail=f"Error analyzing message: {str(e)}")
+
+@app.post("/analyze-image", response_model=AnalyzeResponse)
+async def analyze_image(file: UploadFile = File(...)):
+    if not client:
+        raise HTTPException(
+            status_code=500, 
+            detail="Gemini API key is not configured on the server."
+        )
+        
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="File provided is not an image."
+        )
+
+    try:
+        # Read the file bytes
+        image_data = await file.read()
+        
+        # Prepare the image part for Gemini
+        image_part = types.Part.from_bytes(
+            data=image_data,
+            mime_type=file.content_type
+        )
+        
+        # We send the same system instruction, but ask it to analyze the image
+        prompt = "Analyze this image (which could be a screenshot of a text message, email, or a suspicious website/app) for scams or fraud. Extract any relevant text from the image, understand the context, and identify any phishing links, urgency, fake bank alerts, or social engineering tactics."
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[prompt, image_part],
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+                response_schema={
+                    "type": "OBJECT",
+                    "properties": {
+                        "risk_score": {"type": "INTEGER"},
+                        "classification": {"type": "STRING"},
+                        "explanation": {"type": "STRING"},
+                        "recommended_action": {"type": "STRING"}
+                    },
+                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                },
+                temperature=0.1,
+            ),
+        )
+
+        import json
+        result = json.loads(response.text)
+        return AnalyzeResponse(**result)
+
+    except Exception as e:
+        print(f"Error calling Gemini API for image: {e}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing image: {str(e)}")
+

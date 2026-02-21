@@ -135,7 +135,17 @@ async def analyze_image(file: UploadFile = File(...)):
         )
         
         # We send the same system instruction, but ask it to analyze the image
-        prompt = "Analyze this image (which could be a screenshot of a text message, email, or a suspicious website/app) for scams or fraud. Extract any relevant text from the image, understand the context, and identify any phishing links, urgency, fake bank alerts, or social engineering tactics."
+        prompt = """
+        Analyze this image for two main types of scams:
+        1. Contextual Scams: Extract any relevant text, understand the context, and identify phishing links, urgency, fake bank alerts, or social engineering tactics (e.g., screenshots of fake WhatsApp messages or emails).
+        2. Visual Scams & Deepfakes: Examine the image itself for signs of AI generation, digital manipulation, or deepfakes. Look for AI artifacts such as:
+           - Unnatural textures, warped backgrounds, or nonsensical text/logos.
+           - Anatomical anomalies (e.g., six fingers, merged limbs, unnatural eyes/teeth).
+           - Inconsistent lighting, shadows, or reflections.
+           - Blurry edges around subjects indicating poor Photoshop or face-swapping.
+        
+        If you detect signs of AI generation or deepfake manipulation, reflect that heavily in the risk_score and explanation.
+        """
         
         response = client.models.generate_content(
             model='gemini-2.5-flash',

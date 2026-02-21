@@ -42,6 +42,9 @@ class AnalyzeRequest(BaseModel):
 class AnalyzeUrlRequest(BaseModel):
     url: str = Field(..., description="The URL to analyze for phishing or scams")
 
+class AnalyzeLiveRequest(BaseModel):
+    transcript_chunk: str = Field(..., description="A chunk of live transcribed audio text from a phone call")
+
 class AnalyzeResponse(BaseModel):
     risk_score: int = Field(..., description="Scam probability score (0-100%)", ge=0, le=100)
     classification: str = Field(..., description="Classification (Safe, Suspicious, Scam)")
@@ -277,6 +280,51 @@ async def analyze_audio(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Error calling Gemini API for audio: {e}")
         raise HTTPException(status_code=500, detail=f"Error analyzing audio: {str(e)}")
+
+@app.post("/analyze-live", response_model=AnalyzeResponse)
+async def analyze_live(request: AnalyzeLiveRequest):
+    if not client:
+        raise HTTPException(
+            status_code=500, 
+            detail="Gemini API key is not configured on the server."
+        )
+
+    try:
+        live_prompt = f"""
+        Analyze the following live, running transcription of an ongoing phone call.
+        Transcript so far: "{request.transcript_chunk}"
+        
+        Is this an active scam? Look for extreme urgency, requests for OTPs, CVVs, passwords, or impersonation of authority figures like police or bank reps.
+        If it strongly looks like a scam in progress, rate the risk_score very high and set classification to "Scam".
+        """
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=live_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+                response_schema={
+                    "type": "OBJECT",
+                    "properties": {
+                        "risk_score": {"type": "INTEGER"},
+                        "classification": {"type": "STRING"},
+                        "explanation": {"type": "STRING"},
+                        "recommended_action": {"type": "STRING"}
+                    },
+                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                },
+                temperature=0.1,
+            ),
+        )
+        
+        import json
+        result = json.loads(response.text)
+        return AnalyzeResponse(**result)
+        
+    except Exception as e:
+        print(f"Error calling Gemini API for live analysis: {e}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing live transcript: {str(e)}")
 
 
 

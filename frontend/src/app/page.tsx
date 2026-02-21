@@ -6,7 +6,7 @@ import {
   Loader2, Info, UploadCloud, MessageSquare,
   Phone, Link as LinkIcon, Video, IndianRupee,
   Cpu, CheckCircle2, Github, Twitter, Mail,
-  Mic, Square, Play, Trash2
+  Mic, Square, Play, Trash2, Activity
 } from 'lucide-react';
 
 interface AnalyzeResponse {
@@ -34,6 +34,12 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Live STT State
+  const [isLiveMonitoring, setIsLiveMonitoring] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [interruptionAlert, setInterruptionAlert] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
@@ -100,6 +106,74 @@ export default function Home() {
     }
   };
 
+  const startLiveMonitoring = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setError("Speech Recognition is not supported in this browser. Please use Chrome.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN'; // Indian English
+
+    let currentTranscript = '';
+
+    recognition.onresult = async (event: any) => {
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          currentTranscript += event.results[i][0].transcript;
+          setLiveTranscript(currentTranscript);
+
+          // Send to backend for live analysis if it's long enough
+          if (currentTranscript.length > 20 && !interruptionAlert) {
+            try {
+              const response = await fetch('http://localhost:8000/analyze-live', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ transcript_chunk: currentTranscript }),
+              });
+              if (response.ok) {
+                const data = await response.json();
+                if (data.classification === 'Scam' && data.risk_score > 75) {
+                  setInterruptionAlert(true);
+                  setResult(data);
+                  stopLiveMonitoring();
+                  // Play alert sound
+                  const audio = new Audio('/alert.mp3'); // Fallback to silent if missing
+                  audio.play().catch(() => { });
+                }
+              }
+            } catch (e) { console.error(e) }
+          }
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+          setLiveTranscript(currentTranscript + interimTranscript);
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error(event.error);
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsLiveMonitoring(true);
+    setLiveTranscript('');
+    setInterruptionAlert(false);
+    setResult(null);
+  };
+
+  const stopLiveMonitoring = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsLiveMonitoring(false);
+  };
+
   const clearInput = () => {
     setMessage('');
     setUrl('');
@@ -108,6 +182,9 @@ export default function Home() {
     setAudioBlob(null);
     setAudioURL(null);
     setRecordingTime(0);
+    setLiveTranscript('');
+    setInterruptionAlert(false);
+    stopLiveMonitoring();
     setResult(null);
     setError(null);
   };
@@ -503,72 +580,110 @@ export default function Home() {
             ) : activeTab === 'call' ? (
               <div className="flex flex-col gap-6 items-center">
 
-                <div className="w-full flex flex-col items-center justify-center p-8 border-2 border-[var(--color-cyber-border)] rounded-2xl bg-[var(--color-cyber-nav)] transition-all">
+                {interruptionAlert ? (
+                  <div className="w-full flex flex-col items-center justify-center p-12 border-4 border-rose-500 rounded-2xl bg-rose-500/10 animate-pulse relative overflow-hidden">
+                    <div className="absolute inset-0 bg-red-600/20 blur-3xl animate-pulse" />
+                    <AlertTriangle className="w-24 h-24 text-rose-500 mb-6 drop-shadow-[0_0_15px_rgba(244,63,94,0.8)] animate-bounce" />
+                    <h2 className="text-4xl font-black text-rose-500 tracking-wider mb-2 text-center uppercase drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]">SCAM DETECTED</h2>
+                    <h3 className="text-2xl font-bold text-white mb-6 text-center">HANG UP IMMEDIATELY</h3>
+                    <button onClick={clearInput} className="relative z-10 px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors shadow-[0_0_20px_rgba(244,63,94,0.5)]">
+                      Dismiss Alert
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col items-center justify-center p-8 border-2 border-[var(--color-cyber-border)] rounded-2xl bg-[var(--color-cyber-nav)] transition-all">
 
-                  {audioURL ? (
-                    <div className="w-full flex items-center justify-between gap-4 bg-[var(--color-cyber-panel)] p-4 rounded-xl border border-white/5">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400">
-                          <Play className="w-5 h-5 ml-1" />
+                    {audioURL ? (
+                      <div className="w-full flex items-center justify-between gap-4 bg-[var(--color-cyber-panel)] p-4 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400">
+                            <Play className="w-5 h-5 ml-1" />
+                          </div>
+                          <audio src={audioURL} controls className="w-full max-w-[300px] h-10 outline-none" />
                         </div>
-                        <audio src={audioURL} controls className="w-full max-w-[300px] h-10 outline-none" />
-                      </div>
-                      <button onClick={clearInput} className="p-2 text-gray-500 hover:text-rose-400 transition-colors tooltip" aria-label="Delete recording">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-6 py-4">
-                      <div className={`relative flex items-center justify-center ${isRecording ? 'animate-pulse' : ''}`}>
-                        {isRecording && <div className="absolute inset-0 bg-rose-500 rounded-full blur-xl opacity-30 animate-pulse" />}
-                        <button
-                          onClick={isRecording ? stopRecording : startRecording}
-                          className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all ${isRecording
-                            ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
-                            : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
-                            }`}
-                        >
-                          {isRecording ? <Square className="w-8 h-8 text-white fill-white" /> : <Mic className="w-10 h-10 text-white" />}
+                        <button onClick={clearInput} className="p-2 text-gray-500 hover:text-rose-400 transition-colors tooltip" aria-label="Delete recording">
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-6 py-4">
+                        <div className={`relative flex items-center justify-center ${isRecording ? 'animate-pulse' : ''}`}>
+                          {isRecording && <div className="absolute inset-0 bg-rose-500 rounded-full blur-xl opacity-30 animate-pulse" />}
+                          <button
+                            onClick={isRecording ? stopRecording : startRecording}
+                            className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all ${isRecording
+                              ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
+                              : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
+                              }`}
+                          >
+                            {isRecording ? <Square className="w-8 h-8 text-white fill-white" /> : <Mic className="w-10 h-10 text-white" />}
+                          </button>
+                        </div>
 
-                      <div className="text-center">
-                        {isRecording ? (
-                          <>
-                            <h3 className="text-rose-400 font-bold text-xl drop-shadow-[0_0_10px_rgba(244,63,94,0.5)]">
-                              Recording... {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
-                            </h3>
-                            <p className="text-gray-400 text-sm mt-2">Hold your device near the speaker to capture the call.</p>
-                          </>
+                        <div className="text-center">
+                          {isRecording ? (
+                            <>
+                              <h3 className="text-rose-400 font-bold text-xl drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]">
+                                Recording... {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+                              </h3>
+                              <p className="text-gray-400 text-sm mt-2">Hold your device near the speaker to capture the call.</p>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="text-white font-bold text-lg">Click to Start Recording</h3>
+                              <p className="text-gray-400 text-sm mt-2">Put your phone on speaker to record a suspicious call.</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!interruptionAlert && (
+                  <div className="w-full flex flex-col gap-4">
+                    {/* Live STT Monitor */}
+                    <div className="w-full bg-slate-800/50 border border-white/5 rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="flex items-center gap-2 font-semibold text-white">
+                          <Activity className="w-5 h-5 text-emerald-400" /> Live Call Monitor (STT)
+                        </h4>
+                        <button
+                          onClick={isLiveMonitoring ? stopLiveMonitoring : startLiveMonitoring}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${isLiveMonitoring ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'}`}
+                        >
+                          {isLiveMonitoring ? <><Square className="w-4 h-4 fill-current" /> Stop Monitoring</> : <><Mic className="w-4 h-4" /> Start Live Monitor</>}
+                        </button>
+                      </div>
+                      <div className="bg-black/40 rounded-lg p-4 min-h-[100px] border border-white/5 font-mono text-sm text-gray-300">
+                        {isLiveMonitoring && !liveTranscript ? (
+                          <span className="text-gray-500 animate-pulse">Listening... please start speaking...</span>
                         ) : (
-                          <>
-                            <h3 className="text-white font-bold text-lg">Click to Start Recording</h3>
-                            <p className="text-gray-400 text-sm mt-2">Put your phone on speaker to record a suspicious call.</p>
-                          </>
+                          liveTranscript || <span className="text-gray-500">Live transcription will appear here. Useful for real-time scam disruption.</span>
                         )}
                       </div>
                     </div>
-                  )}
-                </div>
 
-                <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
-                  {error ? (
-                    <div className="text-rose-400 text-sm flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 w-fit">
-                      <AlertTriangle className="w-4 h-4" /> {error}
+                    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+                      {error ? (
+                        <div className="text-rose-400 text-sm flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 w-fit">
+                          <AlertTriangle className="w-4 h-4" /> {error}
+                        </div>
+                      ) : <div />}
+
+                      <div className="flex gap-3 w-full sm:w-auto">
+                        {/* Only show analyze button if there is a recorded blob */}
+                        <button
+                          onClick={handleAnalyze}
+                          disabled={isAnalyzing || !audioBlob || isRecording || isLiveMonitoring}
+                          className="w-full sm:w-48 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 text-white px-8 py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                        >
+                          {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}
+                        </button>
+                      </div>
                     </div>
-                  ) : <div />}
-
-                  <div className="flex gap-3 w-full sm:w-auto">
-                    {/* Only show analyze button if there is a recorded blob */}
-                    <button
-                      onClick={handleAnalyze}
-                      disabled={isAnalyzing || !audioBlob || isRecording}
-                      className="w-full sm:w-48 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 text-white px-8 py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(168,85,247,0.3)]"
-                    >
-                      {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}
-                    </button>
                   </div>
-                </div>
+                )}
 
                 {/* Results Section for Voice Call */}
                 {result && (

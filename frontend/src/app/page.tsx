@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Shield, AlertTriangle, ShieldAlert, Send,
   Loader2, Info, UploadCloud, MessageSquare,
@@ -47,6 +47,12 @@ export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+
+  // Custom Audio Player State
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
@@ -151,7 +157,7 @@ export default function Home() {
   };
 
   const addSttLog = (msg: string) => {
-    setSttDebugLog(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()} - ${msg}`]);
+    setSttDebugLog(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()} - ${msg} `]);
   };
 
   const startLiveMonitoring = () => {
@@ -218,14 +224,14 @@ export default function Home() {
             addSttLog("Attempting auto-restart...");
             recognitionRef.current.start();
           } catch (e: any) {
-            addSttLog(`Auto-restart failed: ${e.message}`);
+            addSttLog(`Auto - restart failed: ${e.message} `);
           }
         }
       }, 500);
     };
 
     recognition.onerror = (event: any) => {
-      addSttLog(`ERROR: ${event.error}`);
+      addSttLog(`ERROR: ${event.error} `);
       if (event.error === 'network') {
         setError("Network error: Chrome requires an active internet connection to process speech, or there was a connection drop.");
         setIsLiveMonitoring(false);
@@ -248,7 +254,7 @@ export default function Home() {
       setResult(null);
       addSttLog("Engine started successfully. Listening!");
     } catch (e: any) {
-      addSttLog(`Engine start failed: ${e.message}`);
+      addSttLog(`Engine start failed: ${e.message} `);
       setError("Could not start speech recognition engine.");
     }
   };
@@ -274,6 +280,8 @@ export default function Home() {
     stopLiveMonitoring();
     setResult(null);
     setError(null);
+    setIsPlaying(false);
+    setAudioProgress(0);
   };
 
   const handleAnalyze = async () => {
@@ -346,6 +354,47 @@ export default function Home() {
     }
   };
 
+  // --- Custom Audio Player Handlers ---
+  const togglePlayPause = () => {
+    if (audioPlayerRef.current) {
+      if (isPlaying) {
+        audioPlayerRef.current.pause();
+      } else {
+        audioPlayerRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioPlayerRef.current) {
+      setAudioProgress((audioPlayerRef.current.currentTime / audioPlayerRef.current.duration) * 100 || 0);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioPlayerRef.current) {
+      setAudioDuration(audioPlayerRef.current.duration);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const seekValue = Number(e.target.value);
+    if (audioPlayerRef.current) {
+      const seekTime = (seekValue / 100) * audioPlayerRef.current.duration;
+      audioPlayerRef.current.currentTime = seekTime;
+      setAudioProgress(seekValue);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')} `;
+  };
+
+
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-purple-500/30">
 
@@ -393,25 +442,25 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
               <button
                 onClick={() => { setActiveTab('message'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.3)]
+                className={`px - 8 py - 3.5 rounded - xl font - semibold transition - all duration - 300 shadow - [0_0_20px_rgba(37, 99, 235, 0.3)]
                   ${activeTab === 'message' ? 'bg-blue-600 text-white hover:bg-blue-500 scale-105' : 'bg-[var(--color-cyber-panel)] text-white hover:bg-blue-600/20'}
-                `}
+`}
               >
                 Scan Message
               </button>
               <button
                 onClick={() => { setActiveTab('call'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-300
+                className={`px - 8 py - 3.5 rounded - xl font - semibold transition - all duration - 300
                   ${activeTab === 'call' ? 'bg-purple-500 text-white hover:bg-purple-400 scale-105 shadow-[0_0_20px_rgba(168,85,247,0.3)]' : 'bg-[var(--color-cyber-panel)] text-white hover:bg-purple-500/20'}
-                `}
+`}
               >
                 Check Call
               </button>
               <button
                 onClick={() => { setActiveTab('url'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-300
+                className={`px - 8 py - 3.5 rounded - xl font - semibold transition - all duration - 300
                   ${activeTab === 'url' ? 'bg-slate-700 text-white hover:bg-slate-600 scale-105' : 'bg-[var(--color-cyber-panel)] text-[var(--color-cyber-muted)] hover:bg-slate-800'}
-                `}
+`}
               >
                 Analyze URL
               </button>
@@ -443,8 +492,8 @@ export default function Home() {
 
                 {/* Input Toggle */}
                 <div className="flex bg-[var(--color-cyber-nav)] p-1 rounded-lg w-fit border border-white/5">
-                  <button onClick={() => setInputType('text')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${inputType === 'text' ? 'bg-[var(--color-cyber-panel)] text-white shadow' : 'text-gray-400 hover:text-white'}`}>Text</button>
-                  <button onClick={() => setInputType('image')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${inputType === 'image' ? 'bg-[var(--color-cyber-panel)] text-white shadow' : 'text-gray-400 hover:text-white'}`}>Image</button>
+                  <button onClick={() => setInputType('text')} className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${inputType === 'text' ? 'bg-[var(--color-cyber-panel)] text-white shadow' : 'text-gray-400 hover:text-white'} `}>Text</button>
+                  <button onClick={() => setInputType('image')} className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${inputType === 'image' ? 'bg-[var(--color-cyber-panel)] text-white shadow' : 'text-gray-400 hover:text-white'} `}>Image</button>
                 </div>
 
                 {inputType === 'text' ? (
@@ -513,7 +562,7 @@ export default function Home() {
 
                       {/* Risk Score */}
                       <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <div className={`absolute inset - 0 opacity - 10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'} `} />
                         <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
                         <div className="relative w-28 h-28 flex items-center justify-center z-10">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -521,7 +570,7 @@ export default function Home() {
                             <circle
                               cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                               strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
-                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
+                              className={`transition - all duration - 1000 ${getClassificationColor(result.classification, false)} `}
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -541,7 +590,7 @@ export default function Home() {
                               <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
                             </div>
                           </div>
-                          <div className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest ${getClassificationColor(result.classification)}`}>
+                          <div className={`px - 4 py - 1.5 rounded - full border text - xs font - bold uppercase tracking - widest ${getClassificationColor(result.classification)} `}>
                             {result.classification}
                           </div>
                         </div>
@@ -611,7 +660,7 @@ export default function Home() {
 
                       {/* Risk Score */}
                       <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <div className={`absolute inset - 0 opacity - 10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'} `} />
                         <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
                         <div className="relative w-28 h-28 flex items-center justify-center z-10">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -619,7 +668,7 @@ export default function Home() {
                             <circle
                               cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                               strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
-                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
+                              className={`transition - all duration - 1000 ${getClassificationColor(result.classification, false)} `}
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -639,7 +688,7 @@ export default function Home() {
                               <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
                             </div>
                           </div>
-                          <div className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest ${getClassificationColor(result.classification)}`}>
+                          <div className={`px - 4 py - 1.5 rounded - full border text - xs font - bold uppercase tracking - widest ${getClassificationColor(result.classification)} `}>
                             {result.classification}
                           </div>
                         </div>
@@ -681,27 +730,55 @@ export default function Home() {
                   <div className="w-full flex flex-col items-center justify-center p-8 border-2 border-[var(--color-cyber-border)] rounded-2xl bg-[var(--color-cyber-nav)] transition-all">
 
                     {audioURL ? (
-                      <div className="w-full flex items-center justify-between gap-4 bg-[var(--color-cyber-panel)] p-4 rounded-xl border border-white/5">
+                      <div className="w-full flex items-center justify-between gap-4 bg-[var(--color-cyber-panel)] p-4 rounded-xl border border-white/5 shadow-inner">
                         <div className="flex items-center gap-4 flex-1">
-                          <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400">
-                            <Play className="w-5 h-5 ml-1" />
+                          {/* Hidden actual audio element */}
+                          <audio
+                            ref={audioPlayerRef}
+                            src={audioURL}
+                            onTimeUpdate={handleTimeUpdate}
+                            onLoadedMetadata={handleLoadedMetadata}
+                            onEnded={() => setIsPlaying(false)}
+                          />
+
+                          {/* Custom Play Button */}
+                          <button
+                            onClick={togglePlayPause}
+                            className="w-12 h-12 bg-purple-600 hover:bg-purple-500 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_15px_rgba(147,51,234,0.4)] flex-shrink-0"
+                          >
+                            {isPlaying ? <Square className="w-4 h-4 fill-white" /> : <Play className="w-5 h-5 ml-1 fill-white" />}
+                          </button>
+
+                          {/* Custom Seek Bar */}
+                          <div className="flex-1 flex flex-col gap-1.5">
+                            <div className="flex justify-between text-xs text-gray-400 font-mono font-medium px-1">
+                              <span>{formatTime(audioPlayerRef.current?.currentTime || 0)}</span>
+                              <span>{formatTime(audioDuration)}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={audioProgress}
+                              onChange={handleSeek}
+                              className="w-full h-2 bg-gray-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:bg-purple-300 transition-all"
+                            />
                           </div>
-                          <audio src={audioURL} controls className="w-full max-w-[300px] h-10 outline-none" />
                         </div>
-                        <button onClick={clearInput} className="p-2 text-gray-500 hover:text-rose-400 transition-colors tooltip" aria-label="Delete recording">
+                        <button onClick={clearInput} className="p-2 ml-2 bg-gray-800/50 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors tooltip" aria-label="Delete recording">
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-6 py-4">
-                        <div className={`relative flex items-center justify-center ${isRecording ? 'animate-pulse' : ''}`}>
+                        <div className={`relative flex items - center justify - center ${isRecording ? 'animate-pulse' : ''} `}>
                           {isRecording && <div className="absolute inset-0 bg-rose-500 rounded-full blur-xl opacity-30 animate-pulse" />}
                           <button
                             onClick={isRecording ? stopRecording : startRecording}
-                            className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all ${isRecording
-                              ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
-                              : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
-                              }`}
+                            className={`relative z - 10 w - 24 h - 24 rounded - full flex items - center justify - center transition - all ${isRecording
+                                ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
+                                : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
+                              } `}
                           >
                             {isRecording ? <Square className="w-8 h-8 text-white fill-white" /> : <Mic className="w-10 h-10 text-white" />}
                           </button>
@@ -719,7 +796,7 @@ export default function Home() {
                                   <div
                                     key={i}
                                     className="w-1.5 bg-rose-500 rounded-full transition-all duration-75"
-                                    style={{ height: `${Math.max(4, (audioLevel / 255) * 32 * (Math.random() * 0.5 + 0.5))}px` }}
+                                    style={{ height: `${Math.max(4, (audioLevel / 255) * 32 * (Math.random() * 0.5 + 0.5))} px` }}
                                   />
                                 ))}
                               </div>
@@ -747,7 +824,7 @@ export default function Home() {
                         </h4>
                         <button
                           onClick={isLiveMonitoring ? stopLiveMonitoring : startLiveMonitoring}
-                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${isLiveMonitoring ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'}`}
+                          className={`px - 4 py - 2 rounded - lg font - medium text - sm transition - all flex items - center gap - 2 ${isLiveMonitoring ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'} `}
                         >
                           {isLiveMonitoring ? <><Square className="w-4 h-4 fill-current" /> Stop Monitoring</> : <><Mic className="w-4 h-4" /> Start Live Monitor</>}
                         </button>
@@ -796,7 +873,7 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       {/* ... risk score rings (reuse) ... */}
                       <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <div className={`absolute inset - 0 opacity - 10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'} `} />
                         <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
                         <div className="relative w-28 h-28 flex items-center justify-center z-10">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -804,7 +881,7 @@ export default function Home() {
                             <circle
                               cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                               strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
-                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
+                              className={`transition - all duration - 1000 ${getClassificationColor(result.classification, false)} `}
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -824,7 +901,7 @@ export default function Home() {
                               <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
                             </div>
                           </div>
-                          <div className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest ${getClassificationColor(result.classification)}`}>
+                          <div className={`px - 4 py - 1.5 rounded - full border text - xs font - bold uppercase tracking - widest ${getClassificationColor(result.classification)} `}>
                             {result.classification}
                           </div>
                         </div>
@@ -917,7 +994,7 @@ export default function Home() {
               { icon: <Cpu className="text-cyan-400 w-6 h-6" />, bg: 'bg-cyan-500/10', title: 'Zero-Day Threats', desc: 'Our Gemini-powered engine generalizes to catch completely new, never-before-seen scam tactics.' }
             ].map((f, i) => (
               <div key={i} className="glass-panel p-6 rounded-2xl flex flex-col gap-4 group hover:border-white/20">
-                <div className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center`}>{f.icon}</div>
+                <div className={`w - 12 h - 12 rounded - xl ${f.bg} flex items - center justify - center`}>{f.icon}</div>
                 <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">{f.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
               </div>
@@ -939,7 +1016,7 @@ export default function Home() {
               { num: 3, title: 'Risk Score', desc: 'Get an instant safety rating with detailed explanations and recommendations.', color: 'from-emerald-600 to-emerald-400', shadow: 'shadow-emerald-500/30' },
             ].map((step, i) => (
               <div key={i} className="relative z-10 flex flex-col items-center flex-1 max-w-xs">
-                <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center text-3xl font-black tracking-tighter mb-6 shadow-lg ${step.shadow}`}>
+                <div className={`w - 24 h - 24 rounded - full bg - gradient - to - br ${step.color} flex items - center justify - center text - 3xl font - black tracking - tighter mb - 6 shadow - lg ${step.shadow} `}>
                   {step.num}
                 </div>
                 <h3 className="text-xl font-bold mb-2">{step.title}</h3>

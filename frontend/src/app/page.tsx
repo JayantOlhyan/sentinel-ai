@@ -18,6 +18,8 @@ interface AnalyzeResponse {
   transcript?: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'message' | 'call' | 'url'>('message');
 
@@ -207,7 +209,7 @@ export default function Home() {
             formData.append('file', blob, 'live_chunk.webm');
 
             try {
-              const response = await fetch('http://localhost:8000/analyze-audio-live', {
+              const response = await fetch(`${API_URL}/analyze-audio-live`, {
                 method: 'POST',
                 body: formData,
               });
@@ -309,7 +311,7 @@ export default function Home() {
 
       if (activeTab === 'message') {
         if (inputType === 'text') {
-          response = await fetch('http://localhost:8000/analyze', {
+          response = await fetch(`${API_URL}/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message }),
@@ -317,13 +319,13 @@ export default function Home() {
         } else {
           const formData = new FormData();
           formData.append('file', selectedImage as File);
-          response = await fetch('http://localhost:8000/analyze-image', {
+          response = await fetch(`${API_URL}/analyze-image`, {
             method: 'POST',
             body: formData,
           });
         }
       } else if (activeTab === 'url') {
-        response = await fetch('http://localhost:8000/analyze-url', {
+        response = await fetch(`${API_URL}/analyze-url`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url }),
@@ -331,7 +333,7 @@ export default function Home() {
       } else if (activeTab === 'call') {
         const formData = new FormData();
         formData.append('file', audioBlob as Blob, "recording.webm");
-        response = await fetch('http://localhost:8000/analyze-audio', {
+        response = await fetch(`${API_URL}/analyze-audio`, {
           method: 'POST',
           body: formData,
         });

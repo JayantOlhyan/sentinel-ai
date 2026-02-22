@@ -8,6 +8,7 @@ import {
   Cpu, CheckCircle2, Github, Twitter, Mail,
   Mic, Square, Play, Trash2, Activity
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface AnalyzeResponse {
   risk_score: number;
@@ -406,93 +407,84 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen flex flex-col font-sans selection:bg-[var(--color-brand-primary)]/30">
 
       {/* --- NAVBAR --- */}
-      <nav className="w-full flex items-center justify-between px-6 py-4 bg-[var(--color-cyber-nav)] border-b border-white/5 z-50 sticky top-0 backdrop-blur-md">
+      <nav className="w-full flex items-center justify-between px-6 py-4 bg-[var(--color-base-nav)] border-b border-[var(--color-base-border)] z-50 sticky top-0 backdrop-blur-xl transition-colors">
         <div className="flex items-center gap-2">
-          <Shield className="w-8 h-8 text-blue-500" />
-          <span className="text-xl font-bold tracking-tight">ScamShield</span>
+          <Shield className="w-8 h-8 text-[var(--color-brand-primary)]" />
+          <span className="text-xl font-bold tracking-tight text-[var(--color-base-text)]">Sentinel AI</span>
         </div>
-        <div className="hidden md:flex gap-6 text-sm text-[var(--color-cyber-muted)] font-medium font-sans">
-          <a href="#" className="hover:text-white transition-colors">Products</a>
-          <a href="#" className="hover:text-white transition-colors">Resources</a>
-          <a href="#" className="hover:text-white transition-colors">Contact</a>
+        <div className="hidden md:flex gap-8 text-sm text-[var(--color-base-muted)] font-medium font-sans hover:[&>a]:text-[var(--color-base-text)] transition-colors">
+          <a href="#">Products</a>
+          <a href="#">Resources</a>
+          <a href="#">Contact</a>
         </div>
-        <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
-          Login
-        </button>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <button className="bg-[var(--color-base-text)] text-[var(--color-base-bg)] hover:opacity-90 px-5 py-2 rounded-full text-sm font-semibold transition-all shadow-sm active:scale-95">
+            Sign In
+          </button>
+        </div>
       </nav>
 
-      <main className="flex-1 w-full relative">
+      <main className="flex-1 w-full relative overflow-hidden">
 
         {/* --- HERO SECTION --- */}
-        <section className="relative w-full pt-20 pb-24 md:pt-32 md:pb-32 px-4 flex flex-col items-center justify-center text-center">
-          {/* Glowing Background Blob */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] pointer-events-none" />
+        <section className="relative w-full pt-20 pb-16 md:pt-32 md:pb-24 px-4 flex flex-col items-center justify-center text-center">
+          {/* Glowing Background Blobs */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[var(--color-brand-primary)]/10 rounded-full blur-[120px] pointer-events-none dark:bg-[var(--color-brand-primary)]/20 transition-colors duration-700" />
 
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="mb-6 relative">
-              <Shield className="w-16 h-16 text-blue-400" strokeWidth={1.5} />
-              <div className="absolute -top-2 -right-2 text-yellow-400 animate-pulse">✨</div>
+          <div className="relative z-10 flex flex-col items-center max-w-5xl mx-auto">
+            <div className="mb-6">
+              <span className="pill-badge">
+                <Shield className="w-4 h-4 text-[var(--color-brand-primary)]" /> Real-Time Protection
+              </span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 max-w-4xl">
+            <h1 className="text-5xl md:text-[5.5rem] font-bold tracking-tight mb-6 max-w-4xl text-[var(--color-base-text)] leading-[1.1] text-balance">
               AI-Powered Scam Detection <br className="hidden md:block" />
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-purple-600 bg-clip-text text-transparent">
-                in Real Time
-              </span>
+              in Real Time
             </h1>
 
-            <p className="text-lg md:text-xl text-[var(--color-cyber-muted)] max-w-2xl mb-12">
+            <p className="text-lg md:text-xl text-[var(--color-base-muted)] max-w-2xl mb-12 text-balance font-medium">
               Protect yourself from SMS scams, voice frauds, deepfakes, and malicious URLs with cutting-edge AI technology
             </p>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-16">
+            {/* Pill Tab Switcher (matches reference image) */}
+            <div className="flex items-center p-1.5 bg-[var(--color-base-nav)] border border-[var(--color-base-border)] rounded-full shadow-sm mb-16 backdrop-blur-md transition-all">
               <button
                 onClick={() => { setActiveTab('message'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className={`px - 8 py - 3.5 rounded - xl font - semibold transition - all duration - 300 shadow - [0_0_20px_rgba(37, 99, 235, 0.3)]
-                  ${activeTab === 'message' ? 'bg-blue-600 text-white hover:bg-blue-500 scale-105' : 'bg-[var(--color-cyber-panel)] text-white hover:bg-blue-600/20'}
-`}
+                className={`px-6 md:px-8 py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 ${activeTab === 'message' ? 'bg-[var(--color-brand-primary)] text-white shadow-md scale-105' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
               >
                 Scan Message
               </button>
               <button
                 onClick={() => { setActiveTab('call'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className={`px - 8 py - 3.5 rounded - xl font - semibold transition - all duration - 300
-                  ${activeTab === 'call' ? 'bg-purple-500 text-white hover:bg-purple-400 scale-105 shadow-[0_0_20px_rgba(168,85,247,0.3)]' : 'bg-[var(--color-cyber-panel)] text-white hover:bg-purple-500/20'}
-`}
+                className={`px-6 md:px-8 py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 ${activeTab === 'call' ? 'bg-[var(--color-brand-primary)] text-white shadow-md scale-105' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
               >
                 Check Call
               </button>
               <button
                 onClick={() => { setActiveTab('url'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className={`px - 8 py - 3.5 rounded - xl font - semibold transition - all duration - 300
-                  ${activeTab === 'url' ? 'bg-slate-700 text-white hover:bg-slate-600 scale-105' : 'bg-[var(--color-cyber-panel)] text-[var(--color-cyber-muted)] hover:bg-slate-800'}
-`}
+                className={`px-6 md:px-8 py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 ${activeTab === 'url' ? 'bg-[var(--color-brand-primary)] text-white shadow-md scale-105' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
               >
                 Analyze URL
               </button>
-            </div>
-
-            {/* Scroll Indicator */}
-            <div className="animate-bounce p-2 rounded-full border border-white/20">
-              <div className="w-1.5 h-3 bg-white/50 rounded-full" />
             </div>
           </div>
         </section>
 
         {/* --- ANALYZER SECTION --- */}
-        <section id="analyzer" className="w-full max-w-5xl mx-auto px-4 py-12">
-          <div className="glass-panel p-6 md:p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+        <section id="analyzer" className="w-full max-w-5xl mx-auto px-4 py-8 md:py-16">
+          <div className="glass-panel p-6 md:p-10 relative overflow-hidden bg-[var(--color-base-panel)] rounded-[2rem]">
             {/* Tab Header */}
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-[var(--color-cyber-border)]">
-              {activeTab === 'message' && <MessageSquare className="w-6 h-6 text-blue-400" />}
-              {activeTab === 'call' && <Phone className="w-6 h-6 text-purple-400" />}
-              {activeTab === 'url' && <LinkIcon className="w-6 h-6 text-slate-400" />}
-              <h2 className="text-2xl font-semibold">
-                {activeTab === 'message' ? 'Message & Image Scanner' : activeTab === 'call' ? 'Voice Call Analysis' : 'URL Safety Scanner'}
+            <div className="flex items-center gap-3 mb-8 pb-6 border-b border-[var(--color-base-border)]">
+              {activeTab === 'message' && <MessageSquare className="w-7 h-7 text-[var(--color-brand-primary)]" />}
+              {activeTab === 'call' && <Phone className="w-7 h-7 text-[var(--color-brand-primary)]" />}
+              {activeTab === 'url' && <LinkIcon className="w-7 h-7 text-[var(--color-brand-primary)]" />}
+              <h2 className="text-3xl font-bold tracking-tight text-[var(--color-base-text)]">
+                {activeTab === 'message' ? 'Message Scanner' : activeTab === 'call' ? 'Voice Call Analysis' : 'URL Scanner'}
               </h2>
             </div>
 
@@ -500,10 +492,20 @@ export default function Home() {
             {activeTab === 'message' ? (
               <div className="flex flex-col gap-6">
 
-                {/* Input Toggle */}
-                <div className="flex bg-[var(--color-cyber-nav)] p-1 rounded-lg w-fit border border-white/5">
-                  <button onClick={() => setInputType('text')} className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${inputType === 'text' ? 'bg-[var(--color-cyber-panel)] text-white shadow' : 'text-gray-400 hover:text-white'} `}>Text</button>
-                  <button onClick={() => setInputType('image')} className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${inputType === 'image' ? 'bg-[var(--color-cyber-panel)] text-white shadow' : 'text-gray-400 hover:text-white'} `}>Image</button>
+                {/* Input Toggle (matching user reference) */}
+                <div className="flex items-center bg-[var(--color-base-bg)] p-1 rounded-[1rem] w-fit shadow-inner border border-[var(--color-base-border)] transition-all">
+                  <button
+                    onClick={() => setInputType('text')}
+                    className={`px-5 py-2.5 rounded-[0.75rem] text-sm font-semibold transition-all duration-200 ${inputType === 'text' ? 'bg-[var(--color-base-panel)] text-[var(--color-base-text)] shadow-sm' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
+                  >
+                    Text
+                  </button>
+                  <button
+                    onClick={() => setInputType('image')}
+                    className={`px-5 py-2.5 rounded-[0.75rem] text-sm font-semibold transition-all duration-200 ${inputType === 'image' ? 'bg-[var(--color-base-panel)] text-[var(--color-base-text)] shadow-sm' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
+                  >
+                    Image
+                  </button>
                 </div>
 
                 {inputType === 'text' ? (
@@ -511,24 +513,26 @@ export default function Home() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Paste a suspicious SMS, email, or WhatsApp message here..."
-                    className="w-full h-40 bg-[var(--color-cyber-nav)] border border-[var(--color-cyber-border)] text-white p-4 rounded-xl outline-none focus:border-blue-500/50 resize-none transition-colors placeholder:text-gray-600"
+                    className="w-full h-40 bg-[var(--color-base-bg)] border border-[var(--color-base-border)] text-[var(--color-base-text)] p-5 rounded-2xl outline-none focus:border-[var(--color-brand-primary)] focus:ring-4 focus:ring-[var(--color-brand-primary)]/10 resize-none transition-all placeholder:text-[var(--color-base-muted)] shadow-inner"
                   />
                 ) : (
                   <div className="w-full flex justify-center items-center">
                     {imagePreview ? (
-                      <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden border border-[var(--color-cyber-border)] bg-[var(--color-cyber-nav)] flex items-center justify-center">
+                      <div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden border border-[var(--color-base-border)] bg-[var(--color-base-bg)] flex items-center justify-center shadow-inner">
                         <img src={imagePreview} alt="Preview" className="max-h-full object-contain" />
-                        <button onClick={clearInput} className="absolute top-2 right-2 bg-black/50 hover:bg-black p-2 rounded-full text-white backdrop-blur-sm transition-all">✕</button>
+                        <button onClick={clearInput} className="absolute top-3 right-3 bg-[var(--color-base-panel)] hover:bg-[var(--color-base-bg)] p-2 rounded-full text-[var(--color-base-text)] shadow-md transition-all">✕</button>
                       </div>
                     ) : (
                       <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full h-48 md:h-64 border-2 border-dashed border-[var(--color-cyber-border)] hover:border-purple-500/50 hover:bg-purple-500/5 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all gap-3"
+                        className="w-full h-48 md:h-64 border-2 border-dashed border-[var(--color-base-border)] hover:border-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary)]/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all gap-3 bg-[var(--color-base-bg)] shadow-inner"
                       >
-                        <UploadCloud className="w-10 h-10 text-gray-400" />
+                        <div className="w-14 h-14 bg-[var(--color-base-panel)] rounded-full flex items-center justify-center shadow-sm">
+                          <UploadCloud className="w-7 h-7 text-[var(--color-brand-primary)]" />
+                        </div>
                         <div className="text-center">
-                          <p className="text-white font-medium">Click to upload an image</p>
-                          <p className="text-sm text-gray-500 mt-1">PNG, JPG, JPEG up to 5MB</p>
+                          <p className="text-[var(--color-base-text)] font-semibold text-lg">Click to upload an image</p>
+                          <p className="text-sm text-[var(--color-base-muted)] mt-1">PNG, JPG, JPEG up to 5MB</p>
                         </div>
                       </div>
                     )}
@@ -544,80 +548,82 @@ export default function Home() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
                   {error ? (
-                    <div className="text-rose-400 text-sm flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 w-fit">
+                    <div className="text-rose-600 dark:text-rose-400 text-sm flex items-center gap-2 bg-rose-50 dark:bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-200 dark:border-rose-500/20 w-fit font-medium">
                       <AlertTriangle className="w-4 h-4" /> {error}
                     </div>
                   ) : <div />}
 
                   <div className="flex gap-3 w-full sm:w-auto">
                     {(message || url || selectedImage) && (
-                      <button onClick={clearInput} className="px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 mt-auto">
+                      <button onClick={clearInput} className="px-6 py-3 rounded-xl text-sm font-semibold text-[var(--color-base-muted)] hover:text-[var(--color-base-text)] hover:bg-[var(--color-base-bg)] transition-colors mt-auto">
                         Clear
                       </button>
                     )}
                     <button
                       onClick={handleAnalyze}
                       disabled={isAnalyzing || (inputType === 'text' && !message) || (inputType === 'image' && !selectedImage)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-8 py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] text-white px-8 py-3 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(168,85,247,0.39)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.23)] hover:-translate-y-0.5 active:translate-y-0"
                     >
                       {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}
                     </button>
                   </div>
                 </div>
 
-                {/* Results Section for Message Area */}
+                {/* Results Section */}
                 {result && (
-                  <div className="mt-8 pt-6 border-t border-[var(--color-cyber-border)] animate-in slide-in-from-bottom-4 fade-in duration-500">
+                  <div className="mt-8 pt-8 border-t border-[var(--color-base-border)] animate-in slide-in-from-bottom-4 fade-in duration-500">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
                       {/* Risk Score */}
-                      <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className={`absolute inset - 0 opacity - 10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'} `} />
-                        <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
+                      <div className="md:col-span-1 bg-[var(--color-base-bg)] rounded-[2rem] p-6 border border-[var(--color-base-border)] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <h3 className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
                         <div className="relative w-28 h-28 flex items-center justify-center z-10">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(168,85,247,0.1)" strokeWidth="8" />
                             <circle
                               cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                               strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
-                              className={`transition - all duration - 1000 ${getClassificationColor(result.classification, false)} `}
+                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
                             />
                           </svg>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold">{result.risk_score}</span>
-                            <span className="text-[10px] text-gray-500">%</span>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--color-base-text)]">
+                            <span className="text-3xl font-black">{result.risk_score}</span>
+                            <span className="text-[10px] text-[var(--color-base-muted)] font-bold">%</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Details */}
                       <div className="md:col-span-3 flex flex-col gap-4">
-                        <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {result.classification === 'Safe' ? <Shield className="w-6 h-6 text-emerald-400" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6 text-amber-400" /> : <ShieldAlert className="w-6 h-6 text-rose-400" />}
+                        <div className="bg-[var(--color-base-bg)] rounded-3xl p-5 border border-[var(--color-base-border)] flex items-center justify-between shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${result.classification === 'Safe' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : result.classification === 'Suspicious' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                              {result.classification === 'Safe' ? <Shield className="w-6 h-6" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
+                            </div>
                             <div>
-                              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Status</p>
-                              <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
+                              <p className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold">Status</p>
+                              <p className="text-xl font-bold text-[var(--color-base-text)] tracking-tight">{result.classification}</p>
                             </div>
                           </div>
-                          <div className={`px - 4 py - 1.5 rounded - full border text - xs font - bold uppercase tracking - widest ${getClassificationColor(result.classification)} `}>
+                          <div className={`px-5 py-2 rounded-full border text-xs font-black uppercase tracking-widest shadow-sm ${getClassificationColor(result.classification)}`}>
                             {result.classification}
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
-                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5">
-                            <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                              <Info className="w-4 h-4 text-blue-400" /> AI Explanation
+                          <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-inner">
+                            <h4 className="flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
+                              <Info className="w-5 h-5 text-[var(--color-brand-primary)]" /> AI Explanation
                             </h4>
-                            <p className="text-sm text-gray-400 leading-relaxed">{result.explanation}</p>
+                            <p className="text-sm text-[var(--color-base-muted)] leading-relaxed font-medium">{result.explanation}</p>
                           </div>
-                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
-                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                              <CheckCircle2 className="w-4 h-4 text-purple-400" /> Recommended Action
+                          <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] relative overflow-hidden shadow-[0_10px_30px_-10px_rgba(168,85,247,0.4)]">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3">
+                              <CheckCircle2 className="w-5 h-5 text-white/90" /> Recommended Action
                             </h4>
-                            <p className="relative z-10 text-sm font-medium text-blue-100">{result.recommended_action}</p>
+                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed">{result.recommended_action}</p>
                           </div>
                         </div>
                       </div>
@@ -628,94 +634,96 @@ export default function Home() {
             ) : activeTab === 'url' ? (
               <div className="flex flex-col gap-6">
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <LinkIcon className="w-5 h-5 text-gray-400" />
+                  <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                    <LinkIcon className="w-6 h-6 text-[var(--color-base-muted)]" />
                   </div>
                   <input
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://example.com"
-                    className="w-full bg-[var(--color-cyber-nav)] border border-[var(--color-cyber-border)] text-white p-4 pl-12 rounded-xl outline-none focus:border-slate-500/50 transition-colors placeholder:text-gray-600 font-mono"
+                    className="w-full h-16 bg-[var(--color-base-bg)] border border-[var(--color-base-border)] text-[var(--color-base-text)] p-4 pl-14 rounded-2xl outline-none focus:border-[var(--color-brand-primary)] focus:ring-4 focus:ring-[var(--color-brand-primary)]/10 transition-all font-mono shadow-inner placeholder:text-[var(--color-base-muted)] text-lg"
                   />
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
                   {error ? (
-                    <div className="text-rose-400 text-sm flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 w-fit">
+                    <div className="text-rose-600 dark:text-rose-400 text-sm flex items-center gap-2 bg-rose-50 dark:bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-200 dark:border-rose-500/20 w-fit font-medium">
                       <AlertTriangle className="w-4 h-4" /> {error}
                     </div>
                   ) : <div />}
 
                   <div className="flex gap-3 w-full sm:w-auto">
                     {url && (
-                      <button onClick={clearInput} className="px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 mt-auto">
+                      <button onClick={clearInput} className="px-6 py-3 rounded-xl text-sm font-semibold text-[var(--color-base-muted)] hover:text-[var(--color-base-text)] hover:bg-[var(--color-base-bg)] transition-colors mt-auto">
                         Clear
                       </button>
                     )}
                     <button
                       onClick={handleAnalyze}
                       disabled={isAnalyzing || !url}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-8 py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(51,65,85,0.3)]"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-8 py-3 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(51,65,85,0.39)] hover:shadow-[0_6px_20px_rgba(51,65,85,0.23)] hover:-translate-y-0.5 active:translate-y-0"
                     >
-                      {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}
+                      {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze URL</>}
                     </button>
                   </div>
                 </div>
 
                 {/* Results Section for URL */}
                 {result && (
-                  <div className="mt-8 pt-6 border-t border-[var(--color-cyber-border)] animate-in slide-in-from-bottom-4 fade-in duration-500">
+                  <div className="mt-8 pt-8 border-t border-[var(--color-base-border)] animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
                       {/* Risk Score */}
-                      <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className={`absolute inset - 0 opacity - 10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'} `} />
-                        <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
+                      <div className="md:col-span-1 bg-[var(--color-base-bg)] rounded-[2rem] p-6 border border-[var(--color-base-border)] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <h3 className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
                         <div className="relative w-28 h-28 flex items-center justify-center z-10">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(168,85,247,0.1)" strokeWidth="8" />
                             <circle
                               cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                               strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
-                              className={`transition - all duration - 1000 ${getClassificationColor(result.classification, false)} `}
+                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
                             />
                           </svg>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold">{result.risk_score}</span>
-                            <span className="text-[10px] text-gray-500">%</span>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--color-base-text)]">
+                            <span className="text-3xl font-black">{result.risk_score}</span>
+                            <span className="text-[10px] text-[var(--color-base-muted)] font-bold">%</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Details */}
                       <div className="md:col-span-3 flex flex-col gap-4">
-                        <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {result.classification === 'Safe' ? <Shield className="w-6 h-6 text-emerald-400" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6 text-amber-400" /> : <ShieldAlert className="w-6 h-6 text-rose-400" />}
+                        <div className="bg-[var(--color-base-bg)] rounded-3xl p-5 border border-[var(--color-base-border)] flex items-center justify-between shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${result.classification === 'Safe' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : result.classification === 'Suspicious' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                              {result.classification === 'Safe' ? <Shield className="w-6 h-6" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
+                            </div>
                             <div>
-                              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Status</p>
-                              <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
+                              <p className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold">Status</p>
+                              <p className="text-xl font-bold text-[var(--color-base-text)] tracking-tight">{result.classification}</p>
                             </div>
                           </div>
-                          <div className={`px - 4 py - 1.5 rounded - full border text - xs font - bold uppercase tracking - widest ${getClassificationColor(result.classification)} `}>
+                          <div className={`px-5 py-2 rounded-full border text-xs font-black uppercase tracking-widest shadow-sm ${getClassificationColor(result.classification)}`}>
                             {result.classification}
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
-                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5">
-                            <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                              <Info className="w-4 h-4 text-blue-400" /> AI Explanation
+                          <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-inner">
+                            <h4 className="flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
+                              <Info className="w-5 h-5 text-slate-500" /> AI Explanation
                             </h4>
-                            <p className="text-sm text-gray-400 leading-relaxed">{result.explanation}</p>
+                            <p className="text-sm text-[var(--color-base-muted)] leading-relaxed font-medium">{result.explanation}</p>
                           </div>
-                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
-                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                              <CheckCircle2 className="w-4 h-4 text-purple-400" /> Recommended Action
+                          <div className="bg-slate-800 dark:bg-slate-700 rounded-3xl p-6 border border-slate-700 dark:border-slate-600 relative overflow-hidden shadow-[0_10px_30px_-10px_rgba(51,65,85,0.4)]">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3">
+                              <CheckCircle2 className="w-5 h-5 text-white/90" /> Recommended Action
                             </h4>
-                            <p className="relative z-10 text-sm font-medium text-blue-100">{result.recommended_action}</p>
+                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed">{result.recommended_action}</p>
                           </div>
                         </div>
                       </div>
@@ -727,20 +735,20 @@ export default function Home() {
               <div className="flex flex-col gap-6 items-center">
 
                 {interruptionAlert ? (
-                  <div className="w-full flex flex-col items-center justify-center p-12 border-4 border-rose-500 rounded-2xl bg-rose-500/10 animate-pulse relative overflow-hidden">
-                    <div className="absolute inset-0 bg-red-600/20 blur-3xl animate-pulse" />
-                    <AlertTriangle className="w-24 h-24 text-rose-500 mb-6 drop-shadow-[0_0_15px_rgba(244,63,94,0.8)] animate-bounce" />
-                    <h2 className="text-4xl font-black text-rose-500 tracking-wider mb-2 text-center uppercase drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]">SCAM DETECTED</h2>
-                    <h3 className="text-2xl font-bold text-white mb-6 text-center">HANG UP IMMEDIATELY</h3>
-                    <button onClick={clearInput} className="relative z-10 px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors shadow-[0_0_20px_rgba(244,63,94,0.5)]">
+                  <div className="w-full flex flex-col items-center justify-center p-12 border-4 border-rose-500 rounded-[2rem] bg-rose-50 dark:bg-rose-500/10 animate-pulse relative overflow-hidden shadow-2xl">
+                    <div className="absolute inset-0 bg-red-600/10 dark:bg-red-600/20 blur-3xl animate-pulse" />
+                    <AlertTriangle className="w-24 h-24 text-rose-600 dark:text-rose-500 mb-6 drop-shadow-[0_4px_20px_rgba(244,63,94,0.4)] animate-bounce" />
+                    <h2 className="text-4xl font-black text-rose-600 dark:text-rose-500 tracking-wider mb-2 text-center uppercase drop-shadow-sm">SCAM DETECTED</h2>
+                    <h3 className="text-2xl font-bold text-[var(--color-base-text)] mb-8 text-center">HANG UP IMMEDIATELY</h3>
+                    <button onClick={clearInput} className="relative z-10 px-8 py-4 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl transition-all shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:scale-105 active:scale-95">
                       Dismiss Alert
                     </button>
                   </div>
                 ) : (
-                  <div className="w-full flex flex-col items-center justify-center p-8 border-2 border-[var(--color-cyber-border)] rounded-2xl bg-[var(--color-cyber-nav)] transition-all">
+                  <div className="w-full flex flex-col items-center justify-center p-8 md:p-12 border border-[var(--color-base-border)] rounded-[2.5rem] bg-[var(--color-base-bg)] shadow-inner transition-all">
 
                     {audioURL ? (
-                      <div className="w-full flex items-center justify-between gap-4 bg-[var(--color-cyber-panel)] p-4 rounded-xl border border-white/5 shadow-inner">
+                      <div className="w-full max-w-xl flex items-center justify-between gap-4 bg-[var(--color-base-panel)] p-4 rounded-2xl border border-[var(--color-base-border)] shadow-sm">
                         <div className="flex items-center gap-4 flex-1">
                           {/* Hidden actual audio element */}
                           <audio
@@ -754,14 +762,14 @@ export default function Home() {
                           {/* Custom Play Button */}
                           <button
                             onClick={togglePlayPause}
-                            className="w-12 h-12 bg-purple-600 hover:bg-purple-500 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_15px_rgba(147,51,234,0.4)] flex-shrink-0"
+                            className="w-14 h-14 bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] rounded-2xl flex items-center justify-center text-white transition-all shadow-md flex-shrink-0"
                           >
-                            {isPlaying ? <Square className="w-4 h-4 fill-white" /> : <Play className="w-5 h-5 ml-1 fill-white" />}
+                            {isPlaying ? <Square className="w-5 h-5 fill-white" /> : <Play className="w-6 h-6 ml-1 fill-white" />}
                           </button>
 
                           {/* Custom Seek Bar */}
-                          <div className="flex-1 flex flex-col gap-1.5">
-                            <div className="flex justify-between text-xs text-gray-400 font-mono font-medium px-1">
+                          <div className="flex-1 flex flex-col gap-1.5 px-2">
+                            <div className="flex justify-between text-xs text-[var(--color-base-muted)] font-mono font-bold">
                               <span>{formatTime(audioPlayerRef.current?.currentTime || 0)}</span>
                               <span>{formatTime(audioDuration)}</span>
                             </div>
@@ -771,51 +779,51 @@ export default function Home() {
                               max="100"
                               value={audioProgress}
                               onChange={handleSeek}
-                              className="w-full h-2 bg-gray-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:bg-purple-300 transition-all"
+                              className="w-full h-2.5 bg-[var(--color-base-border)] rounded-full appearance-none cursor-pointer focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-[var(--color-brand-primary)] [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:scale-110 transition-all"
                             />
                           </div>
                         </div>
-                        <button onClick={clearInput} className="p-2 ml-2 bg-gray-800/50 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors tooltip" aria-label="Delete recording">
+                        <button onClick={clearInput} className="p-3 bg-[var(--color-base-bg)] rounded-xl text-[var(--color-base-muted)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors shadow-inner" aria-label="Delete recording">
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center gap-6 py-4">
-                        <div className={`relative flex items - center justify - center ${isRecording ? 'animate-pulse' : ''} `}>
-                          {isRecording && <div className="absolute inset-0 bg-rose-500 rounded-full blur-xl opacity-30 animate-pulse" />}
+                      <div className="flex flex-col items-center justify-center gap-8 py-4">
+                        <div className={`relative flex items-center justify-center ${isRecording ? 'animate-pulse' : ''} `}>
+                          {isRecording && <div className="absolute inset-0 bg-rose-500 rounded-[2rem] blur-2xl opacity-40 animate-pulse" />}
                           <button
                             onClick={isRecording ? stopRecording : startRecording}
-                            className={`relative z - 10 w - 24 h - 24 rounded - full flex items - center justify - center transition - all ${isRecording
-                              ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
-                              : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
-                              } `}
+                            className={`relative z-10 w-28 h-28 rounded-[2rem] flex items-center justify-center transition-all duration-300 ${isRecording
+                              ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_10px_40px_rgba(244,63,94,0.4)] scale-95'
+                              : 'bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] shadow-[0_10px_40px_rgba(168,85,247,0.3)] hover:scale-105'
+                              }`}
                           >
-                            {isRecording ? <Square className="w-8 h-8 text-white fill-white" /> : <Mic className="w-10 h-10 text-white" />}
+                            {isRecording ? <Square className="w-10 h-10 text-white fill-white" /> : <Mic className="w-12 h-12 text-white" />}
                           </button>
                         </div>
 
                         <div className="text-center">
                           {isRecording ? (
                             <>
-                              <h3 className="text-rose-400 font-bold text-xl drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]">
+                              <h3 className="text-rose-600 dark:text-rose-400 font-black text-2xl tracking-tight">
                                 Recording... {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
                               </h3>
-                              <div className="flex justify-center items-center gap-1 mt-3 mb-3 h-8">
+                              <div className="flex justify-center items-center gap-1.5 mt-4 mb-4 h-10">
                                 {/* Visualizer Bars */}
                                 {Array.from({ length: 8 }).map((_, i) => (
                                   <div
                                     key={i}
-                                    className="w-1.5 bg-rose-500 rounded-full transition-all duration-75"
-                                    style={{ height: `${Math.max(4, (audioLevel / 255) * 32 * (Math.random() * 0.5 + 0.5))} px` }}
+                                    className="w-2 bg-rose-500 rounded-full transition-all duration-75"
+                                    style={{ height: `${Math.max(6, (audioLevel / 255) * 40 * (Math.random() * 0.5 + 0.5))}px` }}
                                   />
                                 ))}
                               </div>
-                              <p className="text-gray-400 text-sm mt-2">Speak into your microphone. Visualizer should move.</p>
+                              <p className="text-[var(--color-base-muted)] text-sm font-medium mt-2">Speak into your microphone. Visualizer should move.</p>
                             </>
                           ) : (
                             <>
-                              <h3 className="text-white font-bold text-lg">Click to Start Recording</h3>
-                              <p className="text-gray-400 text-sm mt-2">Put your phone on speaker to record a suspicious call.</p>
+                              <h3 className="text-[var(--color-base-text)] font-bold text-xl tracking-tight">Tap to Record Call</h3>
+                              <p className="text-[var(--color-base-muted)] text-sm font-medium mt-2 max-w-xs text-balance">Put your phone on speaker to record a suspicious call securely on your device.</p>
                             </>
                           )}
                         </div>
@@ -825,40 +833,42 @@ export default function Home() {
                 )}
 
                 {!interruptionAlert && (
-                  <div className="w-full flex flex-col gap-4">
+                  <div className="w-full flex flex-col gap-6">
                     {/* Live STT Monitor */}
-                    <div className="w-full bg-slate-800/50 border border-white/5 rounded-xl p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="flex items-center gap-2 font-semibold text-white">
-                          <Activity className="w-5 h-5 text-emerald-400" /> Live Call Monitor (STT)
+                    <div className="w-full bg-[var(--color-base-bg)] border border-[var(--color-base-border)] rounded-3xl p-6 md:p-8 shadow-inner">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+                        <h4 className="flex items-center gap-2 font-bold text-[var(--color-base-text)]">
+                          <Activity className="w-6 h-6 text-emerald-500" /> Live Call Monitor
                         </h4>
                         <button
                           onClick={isLiveMonitoring ? stopLiveMonitoring : startLiveMonitoring}
-                          className={`px - 4 py - 2 rounded - lg font - medium text - sm transition - all flex items - center gap - 2 ${isLiveMonitoring ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'} `}
+                          className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 shadow-sm ${isLiveMonitoring ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100'}`}
                         >
-                          {isLiveMonitoring ? <><Square className="w-4 h-4 fill-current" /> Stop Monitoring</> : <><Mic className="w-4 h-4" /> Start Live Monitor</>}
+                          {isLiveMonitoring ? <><Square className="w-4 h-4 fill-current" /> Stop</> : <><Mic className="w-4 h-4" /> Start Monitor</>}
                         </button>
                       </div>
-                      <div className="bg-black/40 rounded-lg p-4 min-h-[100px] border border-white/5 font-mono text-sm text-gray-300">
+                      <div className="bg-[var(--color-base-panel)] rounded-2xl p-6 min-h-[120px] border border-[var(--color-base-border)] font-medium text-[var(--color-base-text)] shadow-sm">
                         {isLiveMonitoring && !liveTranscript ? (
-                          <span className="text-gray-500 animate-pulse">Listening... please start speaking...</span>
+                          <span className="text-[var(--color-brand-primary)] animate-pulse flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Listening... please start speaking...</span>
                         ) : (
-                          liveTranscript || <span className="text-gray-500">Live transcription will appear here. Useful for real-time scam disruption.</span>
+                          liveTranscript || <span className="text-[var(--color-base-muted)] italic">Live transcription will appear here. Useful for real-time scam disruption.</span>
                         )}
                       </div>
 
                       {/* Deep STT Debug Logs */}
                       {sttDebugLog.length > 0 && (
-                        <div className="mt-3 text-xs font-mono text-gray-500 bg-black/60 p-2 rounded-lg">
-                          <p className="text-gray-400 mb-1 border-b border-gray-700 pb-1">⚙️ STT Engine Diagnostics</p>
-                          {sttDebugLog.map((log, i) => <div key={i}>{log}</div>)}
+                        <div className="mt-4 text-xs font-mono text-[var(--color-base-muted)] bg-[var(--color-base-panel)] p-4 rounded-xl border border-[var(--color-base-border)]">
+                          <p className="text-[var(--color-base-text)] font-semibold mb-2 border-b border-[var(--color-base-border)] pb-2 flex items-center gap-1.5"><Cpu className="w-3.5 h-3.5" /> STT Diagnostics</p>
+                          <div className="flex flex-col gap-1">
+                            {sttDebugLog.map((log, i) => <div key={i}>{log}</div>)}
+                          </div>
                         </div>
                       )}
                     </div>
 
-                    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+                    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4">
                       {error ? (
-                        <div className="text-rose-400 text-sm flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 w-fit">
+                        <div className="text-rose-600 dark:text-rose-400 text-sm flex items-center gap-2 bg-rose-50 dark:bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-200 dark:border-rose-500/20 w-fit font-medium">
                           <AlertTriangle className="w-4 h-4" /> {error}
                         </div>
                       ) : <div />}
@@ -868,9 +878,9 @@ export default function Home() {
                         <button
                           onClick={handleAnalyze}
                           disabled={isAnalyzing || !audioBlob || isRecording || isLiveMonitoring}
-                          className="w-full sm:w-48 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 text-white px-8 py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                          className="w-full sm:w-48 flex items-center justify-center gap-2 bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] text-white px-8 py-3 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(168,85,247,0.39)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.23)] hover:-translate-y-0.5 active:translate-y-0"
                         >
-                          {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}
+                          {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze Call</>}
                         </button>
                       </div>
                     </div>
@@ -879,56 +889,61 @@ export default function Home() {
 
                 {/* Results Section for Voice Call */}
                 {result && (
-                  <div className="mt-8 pt-6 border-t border-[var(--color-cyber-border)] animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
+                  <div className="mt-8 pt-8 border-t border-[var(--color-base-border)] animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                      {/* ... risk score rings (reuse) ... */}
-                      <div className="md:col-span-1 bg-[var(--color-cyber-nav)] rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className={`absolute inset - 0 opacity - 10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'} `} />
-                        <h3 className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
+
+                      {/* Risk Score */}
+                      <div className="md:col-span-1 bg-[var(--color-base-bg)] rounded-[2rem] p-6 border border-[var(--color-base-border)] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <h3 className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
                         <div className="relative w-28 h-28 flex items-center justify-center z-10">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(168,85,247,0.1)" strokeWidth="8" />
                             <circle
                               cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                               strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
-                              className={`transition - all duration - 1000 ${getClassificationColor(result.classification, false)} `}
+                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
                             />
                           </svg>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold">{result.risk_score}</span>
-                            <span className="text-[10px] text-gray-500">%</span>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--color-base-text)]">
+                            <span className="text-3xl font-black">{result.risk_score}</span>
+                            <span className="text-[10px] text-[var(--color-base-muted)] font-bold">%</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Details */}
                       <div className="md:col-span-3 flex flex-col gap-4">
-                        <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {result.classification === 'Safe' ? <Shield className="w-6 h-6 text-emerald-400" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6 text-amber-400" /> : <ShieldAlert className="w-6 h-6 text-rose-400" />}
+                        <div className="bg-[var(--color-base-bg)] rounded-3xl p-5 border border-[var(--color-base-border)] flex items-center justify-between shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${result.classification === 'Safe' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : result.classification === 'Suspicious' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                              {result.classification === 'Safe' ? <Shield className="w-6 h-6" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
+                            </div>
                             <div>
-                              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Status</p>
-                              <p className="text-lg font-bold text-white tracking-wide">{result.classification}</p>
+                              <p className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold">Status</p>
+                              <p className="text-xl font-bold text-[var(--color-base-text)] tracking-tight">{result.classification}</p>
                             </div>
                           </div>
-                          <div className={`px - 4 py - 1.5 rounded - full border text - xs font - bold uppercase tracking - widest ${getClassificationColor(result.classification)} `}>
+                          <div className={`px-5 py-2 rounded-full border text-xs font-black uppercase tracking-widest shadow-sm ${getClassificationColor(result.classification)}`}>
                             {result.classification}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
-                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5">
-                            <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                              <Info className="w-4 h-4 text-blue-400" /> AI Explanation
+                        <div className="grid grid-cols-1 gap-4">
+                          {result.transcript && (
+                            <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-inner">
+                              <h4 className="flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
+                                <MessageSquare className="w-5 h-5 text-[var(--color-brand-primary)]" /> Processed Transcript
+                              </h4>
+                              <p className="text-sm text-[var(--color-base-muted)] leading-relaxed font-medium bg-[var(--color-base-panel)] p-4 rounded-2xl border border-[var(--color-base-border)]">"{result.transcript}"</p>
+                            </div>
+                          )}
+                          <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] relative overflow-hidden shadow-[0_10px_30px_-10px_rgba(168,85,247,0.4)]">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3">
+                              <CheckCircle2 className="w-5 h-5 text-white/90" /> Recommended Action
                             </h4>
-                            <p className="text-sm text-gray-400 leading-relaxed">{result.explanation}</p>
-                          </div>
-                          <div className="bg-[var(--color-cyber-nav)] rounded-xl p-5 border border-white/5 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
-                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                              <CheckCircle2 className="w-4 h-4 text-purple-400" /> Recommended Action
-                            </h4>
-                            <p className="relative z-10 text-sm font-medium text-blue-100">{result.recommended_action}</p>
+                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed">{result.recommended_action}</p>
                           </div>
                         </div>
                       </div>
@@ -949,134 +964,133 @@ export default function Home() {
         </section>
 
         {/* --- STATS SECTION --- */}
-        <section className="w-full max-w-6xl mx-auto px-4 py-20 text-center">
-          <h2 className="text-4xl font-bold mb-3">The Growing Threat</h2>
-          <p className="text-gray-400 mb-12">Digital scams are costing Indians billions every year</p>
+        <section className="w-full max-w-6xl mx-auto px-4 py-24 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--color-base-text)] tracking-tight">The Growing Threat</h2>
+          <p className="text-[var(--color-base-muted)] mb-16 text-lg font-medium">Digital scams are costing Indians billions every year</p>
 
-          <div className="glass-panel p-8 md:p-12 rounded-2xl mb-8 relative overflow-hidden border-rose-500/20">
-            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent" />
+          <div className="glass-panel p-10 md:p-16 rounded-[2.5rem] mb-12 relative overflow-hidden border border-rose-200 dark:border-rose-500/20 shadow-xl bg-[var(--color-base-panel)]">
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-50 dark:from-rose-500/5 to-transparent" />
             <div className="relative z-10">
-              <div className="flex items-center justify-center gap-2 text-rose-400 mb-4">
-                <AlertTriangle className="w-6 h-6" />
-                <h3 className="text-6xl md:text-8xl font-black tracking-tight">1,25,000 <span className="text-4xl md:text-6xl md:ml-2">crore</span></h3>
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-rose-500 mb-6">
+                <AlertTriangle className="w-10 h-10 md:w-12 md:h-12" />
+                <h3 className="text-6xl md:text-8xl font-black tracking-tighter">1,25,000 <span className="text-3xl md:text-5xl">crore</span></h3>
               </div>
-              <p className="text-xl text-white font-medium mb-2">Lost to Scams Annually in India</p>
-              <p className="text-sm text-gray-500">And the number keeps growing every year</p>
+              <p className="text-2xl text-[var(--color-base-text)] font-black mb-3">Lost to Scams Annually in India</p>
+              <p className="text-base text-[var(--color-base-muted)] font-semibold">And the number keeps growing every year</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass-panel p-8 rounded-2xl flex flex-col items-center border-purple-500/20 bg-gradient-to-br from-purple-500/5">
-              <ShieldAlert className="w-8 h-8 text-purple-400 mb-4" />
-              <h4 className="text-5xl font-black text-purple-400 mb-2">95,000+</h4>
-              <p className="text-white font-medium mb-1">Daily Scam Attempts</p>
-              <p className="text-xs text-gray-500">Reported across India</p>
+            <div className="glass-panel p-8 rounded-[2rem] flex flex-col items-center border border-[var(--color-brand-primary)]/20 shadow-md bg-gradient-to-br from-[var(--color-brand-primary)]/5 to-[var(--color-base-panel)] hover:-translate-y-1 transition-transform">
+              <div className="w-16 h-16 bg-[var(--color-brand-primary)]/10 rounded-2xl flex items-center justify-center mb-6">
+                <ShieldAlert className="w-8 h-8 text-[var(--color-brand-primary)]" />
+              </div>
+              <h4 className="text-4xl font-black text-[var(--color-brand-primary)] tracking-tight mb-2">95,000+</h4>
+              <p className="text-[var(--color-base-text)] font-bold mb-1">Daily Scam Attempts</p>
+              <p className="text-sm text-[var(--color-base-muted)]">Reported across India</p>
             </div>
-            <div className="glass-panel p-8 rounded-2xl flex flex-col items-center border-blue-500/20 bg-gradient-to-br from-blue-500/5">
-              <Phone className="w-8 h-8 text-blue-400 mb-4" />
-              <h4 className="text-5xl font-black text-blue-400 mb-2">77%</h4>
-              <p className="text-white font-medium mb-1">Victims Unaware</p>
-              <p className="text-xs text-gray-500">Until it's too late</p>
+            <div className="glass-panel p-8 rounded-[2rem] flex flex-col items-center border border-blue-500/20 shadow-md bg-gradient-to-br from-blue-500/5 to-[var(--color-base-panel)] hover:-translate-y-1 transition-transform">
+              <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6">
+                <Phone className="w-8 h-8 text-blue-500" />
+              </div>
+              <h4 className="text-4xl font-black text-blue-500 tracking-tight mb-2">77%</h4>
+              <p className="text-[var(--color-base-text)] font-bold mb-1">Victims Unaware</p>
+              <p className="text-sm text-[var(--color-base-muted)]">Until it's too late</p>
             </div>
-            <div className="glass-panel p-8 rounded-2xl flex flex-col items-center border-emerald-500/20 bg-gradient-to-br from-emerald-500/5">
-              <Shield className="w-8 h-8 text-emerald-400 mb-4" />
-              <h4 className="text-5xl font-black text-emerald-400 mb-2">85%</h4>
-              <p className="text-white font-medium mb-1">Detection Rate</p>
-              <p className="text-xs text-gray-500">With our AI technology</p>
+            <div className="glass-panel p-8 rounded-[2rem] flex flex-col items-center border border-emerald-500/20 shadow-md bg-gradient-to-br from-emerald-500/5 to-[var(--color-base-panel)] hover:-translate-y-1 transition-transform">
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6">
+                <Shield className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h4 className="text-4xl font-black text-emerald-500 tracking-tight mb-2">85%</h4>
+              <p className="text-[var(--color-base-text)] font-bold mb-1">Detection Rate</p>
+              <p className="text-sm text-[var(--color-base-muted)]">With our AI technology</p>
             </div>
           </div>
         </section>
 
         {/* --- FEATURES SECTION --- */}
-        <section className="w-full max-w-6xl mx-auto px-4 py-20">
+        <section className="w-full max-w-6xl mx-auto px-4 pb-24 pt-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-3">Comprehensive Protection</h2>
-            <p className="text-gray-400">Multiple layers of AI-powered security to keep you safe</p>
+            <h2 className="text-4xl font-bold mb-4 text-[var(--color-base-text)] tracking-tight">Comprehensive Protection</h2>
+            <p className="text-[var(--color-base-muted)] font-medium text-lg">Multiple layers of AI-powered security to keep you safe</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {[
-              { icon: <MessageSquare className="text-blue-400 w-6 h-6" />, bg: 'bg-blue-500/10', title: 'SMS Detection', desc: 'Analyzes text messages for phishing attempts, fake links, and fraudulent patterns using NLP.' },
-              { icon: <Phone className="text-purple-400 w-6 h-6" />, bg: 'bg-purple-500/10', title: 'Voice Scam Detection', desc: 'Real-time voice analysis to detect impersonation, AI-generated voices, and social engineering.' },
-              { icon: <Video className="text-rose-400 w-6 h-6" />, bg: 'bg-rose-500/10', title: 'Deepfake Detector', desc: 'Advanced AI to identify deepfake videos and manipulated media with incredibly high accuracy.' },
-              { icon: <LinkIcon className="text-amber-400 w-6 h-6" />, bg: 'bg-amber-500/10', title: 'URL Safety Scanner', desc: 'Checks URLs against databases of known scams and analyzes website behavior and metadata.' },
-              { icon: <IndianRupee className="text-emerald-400 w-6 h-6" />, bg: 'bg-emerald-500/10', title: 'Financial Risk Score', desc: 'Provides instant risk assessment for financial transactions and unknown payment links.' },
-              { icon: <Cpu className="text-cyan-400 w-6 h-6" />, bg: 'bg-cyan-500/10', title: 'Zero-Day Threats', desc: 'Our Gemini-powered engine generalizes to catch completely new, never-before-seen scam tactics.' }
+              { icon: <MessageSquare className="text-blue-500 w-7 h-7" />, bg: 'bg-blue-500/10', color: 'group-hover:text-blue-500', title: 'SMS Detection', desc: 'Analyzes text messages for phishing attempts, fake links, and fraudulent patterns using NLP.' },
+              { icon: <Phone className="text-purple-500 w-7 h-7" />, bg: 'bg-purple-500/10', color: 'group-hover:text-purple-500', title: 'Voice Scam Detection', desc: 'Real-time voice analysis to detect impersonation, AI-generated voices, and social engineering.' },
+              { icon: <Video className="text-rose-500 w-7 h-7" />, bg: 'bg-rose-500/10', color: 'group-hover:text-rose-500', title: 'Deepfake Detector', desc: 'Advanced AI to identify deepfake videos and manipulated media with incredibly high accuracy.' },
+              { icon: <LinkIcon className="text-amber-500 w-7 h-7" />, bg: 'bg-amber-500/10', color: 'group-hover:text-amber-500', title: 'URL Safety Scanner', desc: 'Checks URLs against databases of known scams and analyzes website behavior and metadata.' },
+              { icon: <IndianRupee className="text-emerald-500 w-7 h-7" />, bg: 'bg-emerald-500/10', color: 'group-hover:text-emerald-500', title: 'Financial Risk Score', desc: 'Provides instant risk assessment for financial transactions and unknown payment links.' },
+              { icon: <Cpu className="text-cyan-500 w-7 h-7" />, bg: 'bg-cyan-500/10', color: 'group-hover:text-cyan-500', title: 'Zero-Day Threats', desc: 'Our Gemini-powered engine generalizes to catch completely new, never-before-seen scam tactics.' }
             ].map((f, i) => (
-              <div key={i} className="glass-panel p-6 rounded-2xl flex flex-col gap-4 group hover:border-white/20">
-                <div className={`w - 12 h - 12 rounded - xl ${f.bg} flex items - center justify - center`}>{f.icon}</div>
-                <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">{f.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
+              <div key={i} className="glass-panel p-8 rounded-[2rem] flex flex-col gap-5 group hover:border-[var(--color-base-border)] hover:bg-[var(--color-base-bg)] shadow-sm hover:shadow-md transition-all border border-[var(--color-base-border)]/50 bg-[var(--color-base-panel)]">
+                <div className={`w-14 h-14 rounded-2xl ${f.bg} flex items-center justify-center`}>{f.icon}</div>
+                <h3 className={`text-xl font-bold text-[var(--color-base-text)] ${f.color} transition-colors tracking-tight`}>{f.title}</h3>
+                <p className="text-[var(--color-base-muted)] text-sm leading-relaxed font-medium">{f.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* --- HOW IT WORKS SECTION --- */}
-        <section className="w-full max-w-5xl mx-auto px-4 py-20 text-center">
-          <h2 className="text-4xl font-bold mb-3">How It Works</h2>
-          <p className="text-gray-400 mb-16">Protection in three simple steps</p>
+        <section className="w-full max-w-5xl mx-auto px-4 pb-32 text-center">
+          <h2 className="text-4xl font-bold mb-4 text-[var(--color-base-text)] tracking-tight">How It Works</h2>
+          <p className="text-[var(--color-base-muted)] mb-20 text-lg font-medium">Protection in three simple steps</p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-4 relative">
-            <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-px bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 opacity-50 z-0" />
+          <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-4 relative">
+            <div className="hidden md:block absolute top-12 left-[18%] right-[18%] h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 opacity-20 dark:opacity-40 z-0 rounded-full" />
 
             {[
-              { num: 1, title: 'User Input', desc: 'Submit your message, call recording, URL, or image for analysis.', color: 'from-blue-600 to-blue-400', shadow: 'shadow-blue-500/30' },
-              { num: 2, title: 'AI Analysis', desc: 'Our advanced AI models scan for patterns, anomalies, and scam indicators.', color: 'from-purple-600 to-purple-400', shadow: 'shadow-purple-500/30' },
-              { num: 3, title: 'Risk Score', desc: 'Get an instant safety rating with detailed explanations and recommendations.', color: 'from-emerald-600 to-emerald-400', shadow: 'shadow-emerald-500/30' },
+              { num: 1, title: 'User Input', desc: 'Submit your message, call recording, URL, or image for analysis.', color: 'from-blue-500 to-indigo-500', shadow: 'shadow-[0_10px_30px_rgba(59,130,246,0.3)]' },
+              { num: 2, title: 'AI Analysis', desc: 'Our advanced AI models scan for patterns, anomalies, and scam indicators.', color: 'from-purple-500 to-fuchsia-500', shadow: 'shadow-[0_10px_30px_rgba(168,85,247,0.3)]' },
+              { num: 3, title: 'Risk Score', desc: 'Get an instant safety rating with detailed explanations and recommendations.', color: 'from-emerald-400 to-teal-500', shadow: 'shadow-[0_10px_30px_rgba(16,185,129,0.3)]' },
             ].map((step, i) => (
               <div key={i} className="relative z-10 flex flex-col items-center flex-1 max-w-xs">
-                <div className={`w - 24 h - 24 rounded - full bg - gradient - to - br ${step.color} flex items - center justify - center text - 3xl font - black tracking - tighter mb - 6 shadow - lg ${step.shadow} `}>
+                <div className={`w-24 h-24 rounded-[2rem] bg-gradient-to-br ${step.color} flex items-center justify-center text-white text-4xl font-black tracking-tighter mb-8 shadow-xl ${step.shadow} transform hover:-translate-y-2 transition-transform`}>
                   {step.num}
                 </div>
-                <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                <p className="text-sm text-gray-400">{step.desc}</p>
+                <h3 className="text-xl font-bold mb-3 text-[var(--color-base-text)] tracking-tight">{step.title}</h3>
+                <p className="text-sm text-[var(--color-base-muted)] font-medium leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
-
-          <button
-            onClick={() => { setActiveTab('message'); document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' }); }}
-            className="mt-16 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full font-bold shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-105 transition-all"
-          >
-            Try It Now - It's Free
-          </button>
         </section>
 
       </main>
 
       {/* --- FOOTER --- */}
-      <footer className="w-full bg-[#0a0614] border-t border-white/5 pt-16 pb-8 px-6 lg:px-20 mt-20">
+      <footer className="w-full bg-[var(--color-base-panel)] border-t border-[var(--color-base-border)] pt-20 pb-12 px-6 lg:px-20 mt-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12 mb-16">
           <div className="max-w-xs">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="w-6 h-6 text-blue-500" />
-              <span className="text-xl font-bold tracking-tight text-white">ScamShield</span>
+            <div className="flex items-center gap-2 mb-6">
+              <Shield className="w-8 h-8 text-[var(--color-brand-primary)]" />
+              <span className="text-2xl font-bold tracking-tight text-[var(--color-base-text)]">Sentinel AI</span>
             </div>
-            <p className="text-sm text-gray-500 mb-6">AI-powered protection against digital scams and fraud. Built for the safety of our digital citizens.</p>
+            <p className="text-sm text-[var(--color-base-muted)] mb-8 font-medium leading-relaxed">AI-powered protection against digital scams and fraud. Built for the safety of our digital citizens.</p>
             <div className="flex gap-4">
-              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Github className="w-5 h-5" /></button>
-              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Twitter className="w-5 h-5" /></button>
-              <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><Mail className="w-5 h-5" /></button>
+              <button className="w-12 h-12 rounded-[1rem] bg-[var(--color-base-bg)] border border-[var(--color-base-border)] hover:bg-[var(--color-brand-primary)] hover:border-[var(--color-brand-primary)] flex items-center justify-center text-[var(--color-base-muted)] hover:text-white transition-all shadow-sm"><Github className="w-5 h-5" /></button>
+              <button className="w-12 h-12 rounded-[1rem] bg-[var(--color-base-bg)] border border-[var(--color-base-border)] hover:bg-[var(--color-brand-primary)] hover:border-[var(--color-brand-primary)] flex items-center justify-center text-[var(--color-base-muted)] hover:text-white transition-all shadow-sm"><Twitter className="w-5 h-5" /></button>
+              <button className="w-12 h-12 rounded-[1rem] bg-[var(--color-base-bg)] border border-[var(--color-base-border)] hover:bg-[var(--color-brand-primary)] hover:border-[var(--color-brand-primary)] flex items-center justify-center text-[var(--color-base-muted)] hover:text-white transition-all shadow-sm"><Mail className="w-5 h-5" /></button>
             </div>
           </div>
 
           <div className="flex-1 max-w-xl">
-            <h4 className="text-white font-bold mb-6">Our Team</h4>
-            <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+            <h4 className="text-[var(--color-base-text)] font-bold mb-8 text-lg tracking-tight">Our Dedicated Team</h4>
+            <div className="grid grid-cols-2 gap-y-8 gap-x-6">
               {[
                 { name: 'Rahul Sharma', role: 'AI/ML Engineer', init: 'RS' },
                 { name: 'Priya Patel', role: 'Full Stack Developer', init: 'PP' },
                 { name: 'Arjun Kumar', role: 'Security Researcher', init: 'AK' },
                 { name: 'Sneha Reddy', role: 'Product Designer', init: 'SR' }
               ].map((p, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-sm font-bold shadow-lg shadow-purple-500/20">
+                <div key={i} className="flex items-center gap-4 group">
+                  <div className="w-12 h-12 rounded-[1rem] bg-[var(--color-base-bg)] border border-[var(--color-base-border)] group-hover:bg-[var(--color-brand-primary)] group-hover:border-[var(--color-brand-primary)] group-hover:text-white text-[var(--color-brand-primary)] flex items-center justify-center text-sm font-black shadow-sm transition-all duration-300">
                     {p.init}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-200">{p.name}</p>
-                    <p className="text-xs text-gray-500">{p.role}</p>
+                    <p className="text-sm font-bold text-[var(--color-base-text)] group-hover:text-[var(--color-brand-primary)] transition-colors">{p.name}</p>
+                    <p className="text-xs text-[var(--color-base-muted)] font-medium">{p.role}</p>
                   </div>
                 </div>
               ))}
@@ -1084,22 +1098,22 @@ export default function Home() {
           </div>
 
           <div>
-            <h4 className="text-white font-bold mb-6">Quick Links</h4>
-            <ul className="space-y-3 text-sm text-gray-500">
-              <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+            <h4 className="text-[var(--color-base-text)] font-bold mb-8 text-lg tracking-tight">Quick Links</h4>
+            <ul className="space-y-4 text-sm text-[var(--color-base-muted)] font-medium">
+              <li><a href="#" className="hover:text-[var(--color-brand-primary)] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[var(--color-base-border)]" /> About Us</a></li>
+              <li><a href="#" className="hover:text-[var(--color-brand-primary)] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[var(--color-base-border)]" /> Documentation</a></li>
+              <li><a href="#" className="hover:text-[var(--color-brand-primary)] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[var(--color-base-border)]" /> Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-[var(--color-brand-primary)] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[var(--color-base-border)]" /> Terms of Service</a></li>
             </ul>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between pt-8 border-t border-white/5 text-xs text-gray-600 gap-4">
-          <p>© 2026 ScamShield. All rights reserved. Built with ❤️ in India.</p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-gray-400">Disclaimer</a>
-            <a href="#" className="hover:text-gray-400">Cookie Policy</a>
-            <a href="#" className="hover:text-gray-400">Report a Bug</a>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between pt-8 border-t border-[var(--color-base-border)] text-sm font-medium text-[var(--color-base-muted)] gap-4">
+          <p>© 2026 Sentinel AI. All rights reserved. Built with ❤️ in India.</p>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-[var(--color-base-text)] transition-colors">Disclaimer</a>
+            <a href="#" className="hover:text-[var(--color-base-text)] transition-colors">Cookie Policy</a>
+            <a href="#" className="hover:text-[var(--color-base-text)] transition-colors">Report a Bug</a>
           </div>
         </div>
       </footer>

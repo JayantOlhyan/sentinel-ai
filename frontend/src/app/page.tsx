@@ -39,7 +39,14 @@ export default function Home() {
   const [isLiveMonitoring, setIsLiveMonitoring] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [interruptionAlert, setInterruptionAlert] = useState(false);
+  const [sttDebugLog, setSttDebugLog] = useState<string[]>([]);
   const recognitionRef = useRef<any>(null);
+
+  // Audio Visualizer State
+  const [audioLevel, setAudioLevel] = useState(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyzerRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
@@ -76,22 +83,51 @@ export default function Home() {
           autoGainControl: true,
         }
       });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // Setup Audio Visualizer so user can SEE if mic is working
+      const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioContextCtor();
+      const analyzer = audioCtx.createAnalyser();
+      analyzer.fftSize = 256;
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyzer);
+      audioContextRef.current = audioCtx;
+      analyzerRef.current = analyzer;
+
+      const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+      const updateAudioLevel = () => {
+        analyzer.getByteFrequencyData(dataArray);
+        const sum = dataArray.reduce((acc, val) => acc + val, 0);
+        const average = sum / dataArray.length;
+        setAudioLevel(average); // 0 to 255
+        animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+      };
+      updateAudioLevel();
+
+      // Let the browser pick its native reliable format instead of forcing WebM
+      const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // Let Blob infer correct type from chunks
+        const audioBlob = new Blob(audioChunksRef.current);
         setAudioBlob(audioBlob);
         setAudioURL(URL.createObjectURL(audioBlob));
         stream.getTracks().forEach(track => track.stop()); // Stop microphone access
+
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        if (audioContextRef.current) audioContextRef.current.close().catch(() => { });
+        setAudioLevel(0);
       };
 
-      mediaRecorder.start();
+      // Pass timeslice (1000ms) to force periodic flushing of chunks
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setRecordingTime(0);
       setResult(null);
@@ -114,10 +150,15 @@ export default function Home() {
     }
   };
 
+  const addSttLog = (msg: string) => {
+    setSttDebugLog(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()} - ${msg}`]);
+  };
+
   const startLiveMonitoring = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setError("Speech Recognition is not supported in this browser. Please use Chrome.");
+      addSttLog("FATAL: Browser does not support Web Speech API");
       return;
     }
 
@@ -125,6 +166,7 @@ export default function Home() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-IN'; // Indian English
+    addSttLog("Initializing speech recognition (en-IN)...");
 
     let currentTranscript = '';
 
@@ -164,17 +206,26 @@ export default function Home() {
       }
     };
 
+    recognition.onspeechstart = () => addSttLog("Speech detected...");
+    recognition.onspeechend = () => addSttLog("Speech ended temporarily.");
+
     recognition.onend = () => {
+      addSttLog("Recognition disconnected automatically or forcibly.");
       // Auto-restart if it disconnects but we are still supposed to be monitoring
-      // Wait a moment then check state
       setTimeout(() => {
         if (isLiveMonitoring && recognitionRef.current) {
-          try { recognitionRef.current.start(); } catch (e) { }
+          try {
+            addSttLog("Attempting auto-restart...");
+            recognitionRef.current.start();
+          } catch (e: any) {
+            addSttLog(`Auto-restart failed: ${e.message}`);
+          }
         }
       }, 500);
     };
 
     recognition.onerror = (event: any) => {
+      addSttLog(`ERROR: ${event.error}`);
       if (event.error === 'network') {
         setError("Network error: Chrome requires an active internet connection to process speech, or there was a connection drop.");
         setIsLiveMonitoring(false);
@@ -183,18 +234,23 @@ export default function Home() {
         setIsLiveMonitoring(false);
       } else if (event.error === 'no-speech') {
         // Ignore no-speech errors, it just means silence
-        console.warn("Speech recognition timeout (no speech). It will auto-restart.");
       } else {
         console.error("Speech recognition error", event.error);
       }
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsLiveMonitoring(true);
-    setLiveTranscript('');
-    setInterruptionAlert(false);
-    setResult(null);
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsLiveMonitoring(true);
+      setLiveTranscript('');
+      setInterruptionAlert(false);
+      setResult(null);
+      addSttLog("Engine started successfully. Listening!");
+    } catch (e: any) {
+      addSttLog(`Engine start failed: ${e.message}`);
+      setError("Could not start speech recognition engine.");
+    }
   };
 
   const stopLiveMonitoring = () => {
@@ -214,6 +270,7 @@ export default function Home() {
     setRecordingTime(0);
     setLiveTranscript('');
     setInterruptionAlert(false);
+    setSttDebugLog([]);
     stopLiveMonitoring();
     setResult(null);
     setError(null);
@@ -656,7 +713,17 @@ export default function Home() {
                               <h3 className="text-rose-400 font-bold text-xl drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]">
                                 Recording... {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
                               </h3>
-                              <p className="text-gray-400 text-sm mt-2">Hold your device near the speaker to capture the call.</p>
+                              <div className="flex justify-center items-center gap-1 mt-3 mb-3 h-8">
+                                {/* Visualizer Bars */}
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className="w-1.5 bg-rose-500 rounded-full transition-all duration-75"
+                                    style={{ height: `${Math.max(4, (audioLevel / 255) * 32 * (Math.random() * 0.5 + 0.5))}px` }}
+                                  />
+                                ))}
+                              </div>
+                              <p className="text-gray-400 text-sm mt-2">Speak into your microphone. Visualizer should move.</p>
                             </>
                           ) : (
                             <>
@@ -692,6 +759,14 @@ export default function Home() {
                           liveTranscript || <span className="text-gray-500">Live transcription will appear here. Useful for real-time scam disruption.</span>
                         )}
                       </div>
+
+                      {/* Deep STT Debug Logs */}
+                      {sttDebugLog.length > 0 && (
+                        <div className="mt-3 text-xs font-mono text-gray-500 bg-black/60 p-2 rounded-lg">
+                          <p className="text-gray-400 mb-1 border-b border-gray-700 pb-1">⚙️ STT Engine Diagnostics</p>
+                          {sttDebugLog.map((log, i) => <div key={i}>{log}</div>)}
+                        </div>
+                      )}
                     </div>
 
                     <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">

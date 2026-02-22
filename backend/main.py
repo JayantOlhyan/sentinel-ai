@@ -50,6 +50,7 @@ class AnalyzeResponse(BaseModel):
     classification: str = Field(..., description="Classification (Safe, Suspicious, Scam)")
     explanation: str = Field(..., description="Detailed explanation of the analysis")
     recommended_action: str = Field(..., description="Recommended action for the user")
+    transcript: str = Field(default="", description="The transcribed text if audio was provided")
 
 # System prompt to instruct Gemini accurately
 SYSTEM_INSTRUCTION = """
@@ -68,7 +69,8 @@ Return a JSON object matching this exact schema:
   "risk_score": integer (0 to 100),
   "classification": string ("Safe", "Suspicious", or "Scam"),
   "explanation": string (A concise, clear explanation of why you gave this score and classification),
-  "recommended_action": string (A clear, actionable recommendation for the user)
+  "recommended_action": string (A clear, actionable recommendation for the user),
+  "transcript": string (Verbatim transcript of audio if applicable, otherwise empty string)
 }
 """
 
@@ -98,9 +100,10 @@ async def analyze_message(request: AnalyzeRequest):
                         "risk_score": {"type": "INTEGER"},
                         "classification": {"type": "STRING"},
                         "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"}
+                        "recommended_action": {"type": "STRING"},
+                        "transcript": {"type": "STRING"}
                     },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
                 },
                 temperature=0.1, # Low temperature for consistent analysis
             ),
@@ -165,9 +168,10 @@ async def analyze_image(file: UploadFile = File(...)):
                         "risk_score": {"type": "INTEGER"},
                         "classification": {"type": "STRING"},
                         "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"}
+                        "recommended_action": {"type": "STRING"},
+                        "transcript": {"type": "STRING"}
                     },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
                 },
                 temperature=0.1,
             ),
@@ -209,9 +213,10 @@ async def analyze_url(request: AnalyzeUrlRequest):
                         "risk_score": {"type": "INTEGER"},
                         "classification": {"type": "STRING"},
                         "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"}
+                        "recommended_action": {"type": "STRING"},
+                        "transcript": {"type": "STRING"}
                     },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
                 },
                 temperature=0.1,
             ),
@@ -251,6 +256,7 @@ async def analyze_audio(file: UploadFile = File(...)):
         4. Deepfakes/AI Voice: Anomalies in the voice tone, robotic inflections, or unnatural pauses that might indicate the voice is AI-generated or cloned.
         
         Provide the standard risk_score, classification, explanation, and recommended_action based on your analysis of the audio conversation.
+        Importantly, YOU MUST populate the `transcript` field with the verbatim words spoken in the audio.
         """
         
         response = client.models.generate_content(
@@ -265,9 +271,10 @@ async def analyze_audio(file: UploadFile = File(...)):
                         "risk_score": {"type": "INTEGER"},
                         "classification": {"type": "STRING"},
                         "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"}
+                        "recommended_action": {"type": "STRING"},
+                        "transcript": {"type": "STRING"}
                     },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
                 },
                 temperature=0.1,
             ),
@@ -310,9 +317,10 @@ async def analyze_live(request: AnalyzeLiveRequest):
                         "risk_score": {"type": "INTEGER"},
                         "classification": {"type": "STRING"},
                         "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"}
+                        "recommended_action": {"type": "STRING"},
+                        "transcript": {"type": "STRING"}
                     },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action"]
+                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
                 },
                 temperature=0.1,
             ),
@@ -325,6 +333,60 @@ async def analyze_live(request: AnalyzeLiveRequest):
     except Exception as e:
         print(f"Error calling Gemini API for live analysis: {e}")
         raise HTTPException(status_code=500, detail=f"Error analyzing live transcript: {str(e)}")
+
+
+@app.post("/analyze-audio-live", response_model=AnalyzeResponse)
+async def analyze_audio_live(file: UploadFile = File(...)):
+    """Receives short 5s chunks of audio for rapid transcription and scam analysis."""
+    if not client:
+        raise HTTPException(
+            status_code=500, 
+            detail="Gemini API key is not configured on the server."
+        )
+
+    try:
+        audio_data = await file.read()
+        audio_part = types.Part.from_bytes(
+            data=audio_data,
+            mime_type=file.content_type if file.content_type else "audio/webm"
+        )
+        
+        prompt = """
+        This is a short ~5-second live chunk of an ongoing phone call.
+        First, transcribe what is being said (if anything) and place it in the `transcript` field.
+        Second, analyze it for *immediate* signs of a scam (e.g., asking for OTP, demanding money urgently).
+        If little or nothing is said, output risk_score 0, "Safe", and the empty or partial transcription.
+        If it strongly looks like a scam in progress, rate the risk_score very high and set classification to "Scam".
+        """
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[prompt, audio_part],
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+                response_schema={
+                    "type": "OBJECT",
+                    "properties": {
+                        "risk_score": {"type": "INTEGER"},
+                        "classification": {"type": "STRING"},
+                        "explanation": {"type": "STRING"},
+                        "recommended_action": {"type": "STRING"},
+                        "transcript": {"type": "STRING"}
+                    },
+                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
+                },
+                temperature=0.1,
+            ),
+        )
+
+        import json
+        result = json.loads(response.text)
+        return AnalyzeResponse(**result)
+
+    except Exception as e:
+        print(f"Error calling Gemini API for live audio chunk: {e}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing live audio chunk: {str(e)}")
 
 
 

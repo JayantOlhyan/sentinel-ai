@@ -14,6 +14,7 @@ interface AnalyzeResponse {
   classification: "Safe" | "Suspicious" | "Scam";
   explanation: string;
   recommended_action: string;
+  transcript?: string;
 }
 
 export default function Home() {
@@ -40,7 +41,9 @@ export default function Home() {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [interruptionAlert, setInterruptionAlert] = useState(false);
   const [sttDebugLog, setSttDebugLog] = useState<string[]>([]);
-  const recognitionRef = useRef<any>(null);
+  const isLiveMonitoringRef = useRef<boolean>(false);
+  const liveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const liveStreamRef = useRef<MediaStream | null>(null);
 
   // Audio Visualizer State
   const [audioLevel, setAudioLevel] = useState(0);
@@ -160,110 +163,117 @@ export default function Home() {
     setSttDebugLog(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()} - ${msg} `]);
   };
 
-  const startLiveMonitoring = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError("Speech Recognition is not supported in this browser. Please use Chrome.");
-      addSttLog("FATAL: Browser does not support Web Speech API");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-IN'; // Indian English
-    addSttLog("Initializing speech recognition (en-IN)...");
-
-    let currentTranscript = '';
-
-    recognition.onresult = async (event: any) => {
-      let interimTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          const finalChunk = event.results[i][0].transcript;
-          currentTranscript += finalChunk + ' ';
-          setLiveTranscript(currentTranscript);
-
-          // Send to backend for live analysis if it's long enough
-          if (finalChunk.length > 10 && !interruptionAlert) {
-            try {
-              const response = await fetch('http://localhost:8000/analyze-live', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ transcript_chunk: currentTranscript }),
-              });
-              if (response.ok) {
-                const data = await response.json();
-                if (data.classification === 'Scam' && data.risk_score > 75) {
-                  setInterruptionAlert(true);
-                  setResult(data);
-                  stopLiveMonitoring();
-                  // Play alert sound
-                  const audio = new Audio('/alert.mp3'); // Fallback to silent if missing
-                  audio.play().catch(() => { });
-                }
-              }
-            } catch (e) { console.error(e) }
-          }
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-          setLiveTranscript(currentTranscript + interimTranscript);
-        }
-      }
-    };
-
-    recognition.onspeechstart = () => addSttLog("Speech detected...");
-    recognition.onspeechend = () => addSttLog("Speech ended temporarily.");
-
-    recognition.onend = () => {
-      addSttLog("Recognition disconnected automatically or forcibly.");
-      // Auto-restart if it disconnects but we are still supposed to be monitoring
-      setTimeout(() => {
-        if (isLiveMonitoring && recognitionRef.current) {
-          try {
-            addSttLog("Attempting auto-restart...");
-            recognitionRef.current.start();
-          } catch (e: any) {
-            addSttLog(`Auto - restart failed: ${e.message} `);
-          }
-        }
-      }, 500);
-    };
-
-    recognition.onerror = (event: any) => {
-      addSttLog(`ERROR: ${event.error} `);
-      if (event.error === 'network') {
-        setError("Network error: Chrome requires an active internet connection to process speech, or there was a connection drop.");
-        setIsLiveMonitoring(false);
-      } else if (event.error === 'not-allowed') {
-        setError("Microphone access denied. Please allow microphone permissions.");
-        setIsLiveMonitoring(false);
-      } else if (event.error === 'no-speech') {
-        // Ignore no-speech errors, it just means silence
-      } else {
-        console.error("Speech recognition error", event.error);
-      }
-    };
-
+  const startLiveMonitoring = async () => {
     try {
-      recognition.start();
-      recognitionRef.current = recognition;
+      addSttLog("Requesting microphone for Live Server STT...");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: false,
+          autoGainControl: true,
+        }
+      });
+
+      liveStreamRef.current = stream;
       setIsLiveMonitoring(true);
+      isLiveMonitoringRef.current = true;
       setLiveTranscript('');
       setInterruptionAlert(false);
       setResult(null);
-      addSttLog("Engine started successfully. Listening!");
+      addSttLog("Microphone streaming started...");
+
+      let currentTranscript = '';
+
+      const recordAndSendChunk = () => {
+        if (!isLiveMonitoringRef.current) return;
+
+        try {
+          // Use specific mime type or let browser choose
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+          const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+          const chunks: Blob[] = [];
+
+          recorder.ondataavailable = e => {
+            if (e.data.size > 0) chunks.push(e.data);
+          };
+
+          recorder.onstop = async () => {
+            if (chunks.length === 0 || !isLiveMonitoringRef.current) return;
+            const blob = new Blob(chunks, { type: mimeType || 'audio/webm' });
+            addSttLog("Sending 5s audio chunk to AI for analysis...");
+
+            const formData = new FormData();
+            formData.append('file', blob, 'live_chunk.webm');
+
+            try {
+              const response = await fetch('http://localhost:8000/analyze-audio-live', {
+                method: 'POST',
+                body: formData,
+              });
+
+              if (response.ok) {
+                const data: AnalyzeResponse = await response.json();
+                if (data.transcript && data.transcript.trim()) {
+                  currentTranscript += data.transcript + ' ';
+                  setLiveTranscript(currentTranscript);
+                  addSttLog(`Transcript: "${data.transcript}"`);
+                }
+
+                if (data.classification === 'Scam' && data.risk_score > 75) {
+                  setInterruptionAlert(true);
+                  setResult(data);
+
+                  // Stop everything
+                  stopLiveMonitoring();
+
+                  // Play alert sound
+                  const audio = new Audio('/alert.mp3');
+                  audio.play().catch(() => { });
+                }
+              } else {
+                addSttLog(`Backend returned ${response.status}`);
+              }
+            } catch (e: any) {
+              addSttLog(`Backend error: ${e.message}`);
+            }
+          };
+
+          // Record for 5 seconds
+          recorder.start();
+          setTimeout(() => {
+            if (recorder.state === 'recording') recorder.stop();
+          }, 5000);
+
+        } catch (err: any) {
+          addSttLog(`Recorder error: ${err.message}`);
+        }
+      };
+
+      // Start the first chunk immediately
+      recordAndSendChunk();
+
+      // Schedule subsequent chunks
+      liveIntervalRef.current = setInterval(recordAndSendChunk, 5000);
+
     } catch (e: any) {
-      addSttLog(`Engine start failed: ${e.message} `);
-      setError("Could not start speech recognition engine.");
+      addSttLog(`Mic access failed: ${e.message}`);
+      setError("Microphone access denied or error occurred.");
     }
   };
 
   const stopLiveMonitoring = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
     setIsLiveMonitoring(false);
+    isLiveMonitoringRef.current = false;
+
+    if (liveIntervalRef.current) {
+      clearInterval(liveIntervalRef.current);
+      liveIntervalRef.current = null;
+    }
+    if (liveStreamRef.current) {
+      liveStreamRef.current.getTracks().forEach(track => track.stop());
+      liveStreamRef.current = null;
+    }
+    addSttLog("Live monitoring stopped.");
   };
 
   const clearInput = () => {
@@ -776,8 +786,8 @@ export default function Home() {
                           <button
                             onClick={isRecording ? stopRecording : startRecording}
                             className={`relative z - 10 w - 24 h - 24 rounded - full flex items - center justify - center transition - all ${isRecording
-                                ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
-                                : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
+                              ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
+                              : 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-105'
                               } `}
                           >
                             {isRecording ? <Square className="w-8 h-8 text-white fill-white" /> : <Mic className="w-10 h-10 text-white" />}

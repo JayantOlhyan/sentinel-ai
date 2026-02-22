@@ -67,7 +67,15 @@ export default function Home() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Use specific constraints to prevent the browser from aggressively muting the microphone
+      // or discarding "noise"
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: false,
+          autoGainControl: true,
+        }
+      });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -124,11 +132,12 @@ export default function Home() {
       let interimTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          currentTranscript += event.results[i][0].transcript;
+          const finalChunk = event.results[i][0].transcript;
+          currentTranscript += finalChunk + ' ';
           setLiveTranscript(currentTranscript);
 
           // Send to backend for live analysis if it's long enough
-          if (currentTranscript.length > 20 && !interruptionAlert) {
+          if (finalChunk.length > 10 && !interruptionAlert) {
             try {
               const response = await fetch('http://localhost:8000/analyze-live', {
                 method: 'POST',
@@ -155,13 +164,29 @@ export default function Home() {
       }
     };
 
+    recognition.onend = () => {
+      // Auto-restart if it disconnects but we are still supposed to be monitoring
+      // Wait a moment then check state
+      setTimeout(() => {
+        if (isLiveMonitoring && recognitionRef.current) {
+          try { recognitionRef.current.start(); } catch (e) { }
+        }
+      }, 500);
+    };
+
     recognition.onerror = (event: any) => {
       if (event.error === 'network') {
         setError("Network error: Chrome requires an active internet connection to process speech, or there was a connection drop.");
+        setIsLiveMonitoring(false);
       } else if (event.error === 'not-allowed') {
         setError("Microphone access denied. Please allow microphone permissions.");
+        setIsLiveMonitoring(false);
+      } else if (event.error === 'no-speech') {
+        // Ignore no-speech errors, it just means silence
+        console.warn("Speech recognition timeout (no speech). It will auto-restart.");
+      } else {
+        console.error("Speech recognition error", event.error);
       }
-      setIsLiveMonitoring(false);
     };
 
     recognition.start();

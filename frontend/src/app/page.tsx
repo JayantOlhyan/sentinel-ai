@@ -612,18 +612,19 @@ export default function Home() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
-                          <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-inner">
-                            <h4 className="flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
+                          <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-primary)]/5 to-[var(--color-base-bg)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
                               <Info className="w-5 h-5 text-[var(--color-brand-primary)]" /> AI Explanation
                             </h4>
-                            <p className="text-sm text-[var(--color-base-muted)] leading-relaxed font-medium">{result.explanation}</p>
+                            <p className="relative z-10 text-sm text-[var(--color-base-muted)] leading-relaxed font-medium group-hover:text-[var(--color-base-text)] transition-colors duration-300">{result.explanation}</p>
                           </div>
-                          <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] relative overflow-hidden shadow-[0_10px_30px_-10px_rgba(168,85,247,0.4)]">
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3">
-                              <CheckCircle2 className="w-5 h-5 text-white/90" /> Recommended Action
+                          <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] shadow-[0_4px_14px_rgba(168,85,247,0.3)] hover:shadow-[0_10px_30px_-5px_rgba(168,85,247,0.5)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent transition-opacity duration-300" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3 tracking-wide">
+                              <CheckCircle2 className="w-5 h-5 text-white" /> Recommended Action
                             </h4>
-                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed">{result.recommended_action}</p>
+                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed group-hover:text-white transition-colors duration-300">{result.recommended_action}</p>
                           </div>
                         </div>
                       </div>
@@ -712,18 +713,19 @@ export default function Home() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
-                          <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-inner">
-                            <h4 className="flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
+                          <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-slate-500/5 to-[var(--color-base-bg)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
                               <Info className="w-5 h-5 text-slate-500" /> AI Explanation
                             </h4>
-                            <p className="text-sm text-[var(--color-base-muted)] leading-relaxed font-medium">{result.explanation}</p>
+                            <p className="relative z-10 text-sm text-[var(--color-base-muted)] leading-relaxed font-medium group-hover:text-[var(--color-base-text)] transition-colors duration-300">{result.explanation}</p>
                           </div>
-                          <div className="bg-slate-800 dark:bg-slate-700 rounded-3xl p-6 border border-slate-700 dark:border-slate-600 relative overflow-hidden shadow-[0_10px_30px_-10px_rgba(51,65,85,0.4)]">
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3">
-                              <CheckCircle2 className="w-5 h-5 text-white/90" /> Recommended Action
+                          <div className="bg-slate-800 dark:bg-slate-700 rounded-3xl p-6 border border-slate-700 dark:border-slate-600 shadow-[0_4px_14px_rgba(51,65,85,0.3)] hover:shadow-[0_10px_30px_-5px_rgba(51,65,85,0.5)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent transition-opacity duration-300" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3 tracking-wide">
+                              <CheckCircle2 className="w-5 h-5 text-white" /> Recommended Action
                             </h4>
-                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed">{result.recommended_action}</p>
+                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed group-hover:text-white transition-colors duration-300">{result.recommended_action}</p>
                           </div>
                         </div>
                       </div>
@@ -931,19 +933,20 @@ export default function Home() {
 
                         <div className="grid grid-cols-1 gap-4">
                           {result.transcript && (
-                            <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-inner">
-                              <h4 className="flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
+                            <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                              <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
                                 <MessageSquare className="w-5 h-5 text-[var(--color-brand-primary)]" /> Processed Transcript
                               </h4>
-                              <p className="text-sm text-[var(--color-base-muted)] leading-relaxed font-medium bg-[var(--color-base-panel)] p-4 rounded-2xl border border-[var(--color-base-border)]">"{result.transcript}"</p>
+                              <p className="relative z-10 text-sm text-[var(--color-base-muted)] leading-relaxed font-medium bg-[var(--color-base-panel)] group-hover:bg-[var(--color-base-bg)] p-4 rounded-2xl border border-[var(--color-base-border)] transition-colors duration-300 shadow-inner group-hover:shadow-sm">"{result.transcript}"</p>
                             </div>
                           )}
-                          <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] relative overflow-hidden shadow-[0_10px_30px_-10px_rgba(168,85,247,0.4)]">
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3">
-                              <CheckCircle2 className="w-5 h-5 text-white/90" /> Recommended Action
+                          <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] shadow-[0_4px_14px_rgba(168,85,247,0.3)] hover:shadow-[0_10px_30px_-5px_rgba(168,85,247,0.5)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3 tracking-wide">
+                              <CheckCircle2 className="w-5 h-5 text-white" /> Recommended Action
                             </h4>
-                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed">{result.recommended_action}</p>
+                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed group-hover:text-white transition-colors duration-300">{result.recommended_action}</p>
                           </div>
                         </div>
                       </div>
@@ -1076,13 +1079,12 @@ export default function Home() {
           </div>
 
           <div className="flex-1 max-w-xl">
-            <h4 className="text-[var(--color-base-text)] font-bold mb-8 text-lg tracking-tight">Our Dedicated Team</h4>
-            <div className="grid grid-cols-2 gap-y-8 gap-x-6">
+            <h4 className="text-[var(--color-base-text)] font-bold mb-8 text-lg tracking-tight">Team <span className="text-[var(--color-brand-primary)]">Hack Homies</span></h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-6">
               {[
-                { name: 'Rahul Sharma', role: 'AI/ML Engineer', init: 'RS' },
-                { name: 'Priya Patel', role: 'Full Stack Developer', init: 'PP' },
-                { name: 'Arjun Kumar', role: 'Security Researcher', init: 'AK' },
-                { name: 'Sneha Reddy', role: 'Product Designer', init: 'SR' }
+                { name: 'Jayant Olhyan', role: 'Team Leader', init: 'JO' },
+                { name: 'Akhil Pratap Singh', role: 'Full Stack Developer', init: 'AS' },
+                { name: 'Mithilesh Bisht', role: 'AI/ML Engineer', init: 'MB' }
               ].map((p, i) => (
                 <div key={i} className="flex items-center gap-4 group">
                   <div className="w-12 h-12 rounded-[1rem] bg-[var(--color-base-bg)] border border-[var(--color-base-border)] group-hover:bg-[var(--color-brand-primary)] group-hover:border-[var(--color-brand-primary)] group-hover:text-white text-[var(--color-brand-primary)] flex items-center justify-center text-sm font-black shadow-sm transition-all duration-300">

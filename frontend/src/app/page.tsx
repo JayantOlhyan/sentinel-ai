@@ -424,9 +424,6 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <button className="bg-[var(--color-base-text)] text-[var(--color-base-bg)] hover:opacity-90 px-5 py-2 rounded-full text-sm font-semibold transition-all shadow-sm active:scale-95">
-            Sign In
-          </button>
         </div>
       </nav>
 

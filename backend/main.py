@@ -78,7 +78,7 @@ async def analyze_message(request: AnalyzeRequest):
         raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=request.message,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
@@ -100,7 +100,7 @@ async def analyze_image(file: UploadFile = File(...)):
         image_part = types.Part.from_bytes(data=image_data, mime_type=file.content_type)
         prompt = "Analyze this image for scams, QR frauds, or deepfake manipulation."
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=[prompt, image_part],
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
@@ -120,7 +120,7 @@ async def analyze_url(request: AnalyzeUrlRequest):
     try:
         url_prompt = f"Analyze this URL for phishing: {request.url}"
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=url_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
@@ -142,7 +142,7 @@ async def analyze_audio(file: UploadFile = File(...)):
         audio_part = types.Part.from_bytes(data=audio_data, mime_type=file.content_type or "audio/webm")
         audio_prompt = "Transcribe and analyze this audio for scams. Populate the transcript field."
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=[audio_prompt, audio_part],
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
@@ -164,7 +164,7 @@ async def analyze_audio_live(file: UploadFile = File(...)):
         audio_part = types.Part.from_bytes(data=audio_data, mime_type=file.content_type or "audio/webm")
         disruption_prompt = "Short 5s chunk analysis. Transcribe and flag for active scams."
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=[disruption_prompt, audio_part],
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
@@ -184,7 +184,7 @@ async def analyze_live(request: AnalyzeLiveRequest):
     try:
         live_prompt = f"Analyze live transcript: {request.transcript_chunk}"
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=live_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,

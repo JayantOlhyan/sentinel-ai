@@ -1,4 +1,5 @@
 import os
+import json
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -19,59 +20,42 @@ app = FastAPI(
 # Configure CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific frontend domains (e.g., Vercel URL)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Initialize Gemini Client
-# Assumes GEMINI_API_KEY is set in environment variables
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
-    # We won't crash the server on startup so it can be deployed and waiting for the key
     print("WARNING: GEMINI_API_KEY environment variable not set.")
     client = None
 else:
     client = genai.Client(api_key=api_key)
 
-# Pydantic models for request/response validation
+# Pydantic models for request/validation
 class AnalyzeRequest(BaseModel):
-    message: str = Field(..., description="The text message (SMS, email, WhatsApp) to analyze")
+    message: str = Field(..., description="The text message to analyze")
 
 class AnalyzeUrlRequest(BaseModel):
-    url: str = Field(..., description="The URL to analyze for phishing or scams")
+    url: str = Field(..., description="The URL to analyze")
 
 class AnalyzeLiveRequest(BaseModel):
-    transcript_chunk: str = Field(..., description="A chunk of live transcribed audio text from a phone call")
+    transcript_chunk: str = Field(..., description="A chunk of live transcribed audio text")
 
 class AnalyzeResponse(BaseModel):
     risk_score: int = Field(..., description="Scam probability score (0-100%)", ge=0, le=100)
     classification: str = Field(..., description="Classification (Safe, Suspicious, Scam)")
-    explanation: str = Field(..., description="Detailed explanation of the analysis")
-    recommended_action: str = Field(..., description="Recommended action for the user")
-    transcript: str = Field(default="", description="The transcribed text if audio was provided")
+    explanation: str = Field(..., description="Detailed explanation")
+    recommended_action: str = Field(..., description="Recommended action")
+    transcript: str = Field(default="", description="The transcribed text")
 
-# System prompt to instruct Gemini accurately
+# System prompt
 SYSTEM_INSTRUCTION = """
-You are Sentinel AI, an expert cybersecurity AI specialized in real-time scam and fraud detection.
-Analyze the provided user message (SMS, email, WhatsApp, or any text context) for potential threats.
-Specifically, look for:
-- Phishing links or suspicious URLs.
-- Urgent threats or fake urgency (e.g., "account suspended", "act immediately").
-- Fake bank messages or unauthorized login alerts.
-- Requests for OTPs, passwords, personal data, or money transfers.
-- Suspicious tone patterns or poor grammar typical of scams.
-- Social engineering tactics.
-
-Return a JSON object matching this exact schema:
-{
-  "risk_score": integer (0 to 100),
-  "classification": string ("Safe", "Suspicious", or "Scam"),
-  "explanation": string (A concise, clear explanation of why you gave this score and classification),
-  "recommended_action": string (A clear, actionable recommendation for the user),
-  "transcript": string (Verbatim transcript of audio if applicable, otherwise empty string)
-}
+You are Sentinel AI, an expert cybersecurity specialist for Indian digital citizens.
+Analyze provided context (SMS, image, or audio) for potential threats common in India.
+Identify UPI Fraud, KYC/Banking scams, Government/Utility impersonation, and Vishing.
 """
 
 @app.get("/")
@@ -81,312 +65,124 @@ async def root():
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_message(request: AnalyzeRequest):
     if not client:
-        raise HTTPException(
-            status_code=500, 
-            detail="Gemini API key is not configured on the server."
-        )
-
+        raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
-        # Use gemini-2.5-flash as it is fast and capable of structured JSON output
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=request.message,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema={
-                    "type": "OBJECT",
-                    "properties": {
-                        "risk_score": {"type": "INTEGER"},
-                        "classification": {"type": "STRING"},
-                        "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"},
-                        "transcript": {"type": "STRING"}
-                    },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
-                },
-                temperature=0.1, # Low temperature for consistent analysis
+                response_schema=AnalyzeResponse.model_json_schema(),
+                temperature=0.1,
             ),
         )
-
-        # The response.text is guaranteed to be a JSON string matching the schema
-        # We parse it and return it via Pydantic model
-        import json
-        result = json.loads(response.text)
-        return AnalyzeResponse(**result)
-
+        return AnalyzeResponse(**json.loads(response.text))
     except Exception as e:
-        print(f"Error calling Gemini API: {e}")
-        raise HTTPException(status_code=500, detail=f"Error analyzing message: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze-image", response_model=AnalyzeResponse)
 async def analyze_image(file: UploadFile = File(...)):
     if not client:
-        raise HTTPException(
-            status_code=500, 
-            detail="Gemini API key is not configured on the server."
-        )
-        
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400,
-            detail="File provided is not an image."
-        )
-
+        raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
-        # Read the file bytes
         image_data = await file.read()
-        
-        # Prepare the image part for Gemini
-        image_part = types.Part.from_bytes(
-            data=image_data,
-            mime_type=file.content_type
-        )
-        
-        # We send the same system instruction, but ask it to analyze the image
-        prompt = """
-        Analyze this image for two main types of scams:
-        1. Contextual Scams: Extract any relevant text, understand the context, and identify phishing links, urgency, fake bank alerts, or social engineering tactics (e.g., screenshots of fake WhatsApp messages or emails).
-        2. Visual Scams & Deepfakes: Examine the image itself for signs of AI generation, digital manipulation, or deepfakes. Look for AI artifacts such as:
-           - Unnatural textures, warped backgrounds, or nonsensical text/logos.
-           - Anatomical anomalies (e.g., six fingers, merged limbs, unnatural eyes/teeth).
-           - Inconsistent lighting, shadows, or reflections.
-           - Blurry edges around subjects indicating poor Photoshop or face-swapping.
-        
-        If you detect signs of AI generation or deepfake manipulation, reflect that heavily in the risk_score and explanation.
-        """
-        
+        image_part = {"mime_type": file.content_type, "data": image_data}
+        prompt = "Analyze this image for scams, QR frauds, or deepfake manipulation."
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=[prompt, image_part],
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema={
-                    "type": "OBJECT",
-                    "properties": {
-                        "risk_score": {"type": "INTEGER"},
-                        "classification": {"type": "STRING"},
-                        "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"},
-                        "transcript": {"type": "STRING"}
-                    },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
-                },
+                response_schema=AnalyzeResponse.model_json_schema(),
                 temperature=0.1,
             ),
         )
-
-        import json
-        result = json.loads(response.text)
-        return AnalyzeResponse(**result)
-
+        return AnalyzeResponse(**json.loads(response.text))
     except Exception as e:
-        print(f"Error calling Gemini API for image: {e}")
-        raise HTTPException(status_code=500, detail=f"Error analyzing image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze-url", response_model=AnalyzeResponse)
 async def analyze_url(request: AnalyzeUrlRequest):
     if not client:
-        raise HTTPException(
-            status_code=500, 
-            detail="Gemini API key is not configured on the server."
-        )
-
+        raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
-        url_prompt = f"""
-        Analyze the following URL for phishing, typosquatting (e.g., g0ogle.com instead of google.com), known malicious domains, suspicious query parameters, or scam structures:
-        URL: {request.url}
-        
-        Provide a risk score and classification. If it looks suspicious or is a known bad domain, penalize it heavily.
-        """
-        
+        url_prompt = f"Analyze this URL for phishing: {request.url}"
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=url_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema={
-                    "type": "OBJECT",
-                    "properties": {
-                        "risk_score": {"type": "INTEGER"},
-                        "classification": {"type": "STRING"},
-                        "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"},
-                        "transcript": {"type": "STRING"}
-                    },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
-                },
+                response_schema=AnalyzeResponse.model_json_schema(),
                 temperature=0.1,
             ),
         )
-
-        import json
-        result = json.loads(response.text)
-        return AnalyzeResponse(**result)
-
+        return AnalyzeResponse(**json.loads(response.text))
     except Exception as e:
-        print(f"Error calling Gemini API for URL: {e}")
-        raise HTTPException(status_code=500, detail=f"Error analyzing URL: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze-audio", response_model=AnalyzeResponse)
 async def analyze_audio(file: UploadFile = File(...)):
     if not client:
-        raise HTTPException(
-            status_code=500, 
-            detail="Gemini API key is not configured on the server."
-        )
-
+        raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
-        # Read the audio bytes
         audio_data = await file.read()
-        
-        # Prepare the audio part for Gemini (usually audio/webm or audio/wav from browser)
-        audio_part = types.Part.from_bytes(
-            data=audio_data,
-            mime_type=file.content_type if file.content_type else "audio/webm"
-        )
-        
-        prompt = """
-        Analyze the attached audio conversation for potential scams or fraud. Look specifically for:
-        1. Voice Phishing (Vishing): Attackers impersonating bank officials, police, or tech support.
-        2. Financial Threats: Urgent demands for money, OTPs, CVV, or passwords.
-        3. Fake Urgency: Claims that an account will be locked or an arrest warrant is out.
-        4. Deepfakes/AI Voice: Anomalies in the voice tone, robotic inflections, or unnatural pauses that might indicate the voice is AI-generated or cloned.
-        
-        Provide the standard risk_score, classification, explanation, and recommended_action based on your analysis of the audio conversation.
-        Importantly, YOU MUST populate the `transcript` field with the verbatim words spoken in the audio.
-        """
-        
+        audio_part = {"mime_type": file.content_type or "audio/webm", "data": audio_data}
+        audio_prompt = "Transcribe and analyze this audio for scams. Populate the transcript field."
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=[prompt, audio_part],
+            model='gemini-2.0-flash',
+            contents=[audio_prompt, audio_part],
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema={
-                    "type": "OBJECT",
-                    "properties": {
-                        "risk_score": {"type": "INTEGER"},
-                        "classification": {"type": "STRING"},
-                        "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"},
-                        "transcript": {"type": "STRING"}
-                    },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
-                },
+                response_schema=AnalyzeResponse.model_json_schema(),
                 temperature=0.1,
             ),
         )
-
-        import json
-        result = json.loads(response.text)
-        return AnalyzeResponse(**result)
-
+        return AnalyzeResponse(**json.loads(response.text))
     except Exception as e:
-        print(f"Error calling Gemini API for audio: {e}")
-        raise HTTPException(status_code=500, detail=f"Error analyzing audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/analyze-audio-live", response_model=AnalyzeResponse)
+async def analyze_audio_live(file: UploadFile = File(...)):
+    if not client:
+        raise HTTPException(status_code=500, detail="Gemini API key not configured.")
+    try:
+        audio_data = await file.read()
+        audio_part = {"mime_type": file.content_type or "audio/webm", "data": audio_data}
+        disruption_prompt = "Short 5s chunk analysis. Transcribe and flag for active scams."
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=[disruption_prompt, audio_part],
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+                response_schema=AnalyzeResponse.model_json_schema(),
+                temperature=0.1,
+            ),
+        )
+        return AnalyzeResponse(**json.loads(response.text))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze-live", response_model=AnalyzeResponse)
 async def analyze_live(request: AnalyzeLiveRequest):
     if not client:
-        raise HTTPException(
-            status_code=500, 
-            detail="Gemini API key is not configured on the server."
-        )
-
+        raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
-        live_prompt = f"""
-        Analyze the following live, running transcription of an ongoing phone call.
-        Transcript so far: "{request.transcript_chunk}"
-        
-        Is this an active scam? Look for extreme urgency, requests for OTPs, CVVs, passwords, or impersonation of authority figures like police or bank reps.
-        If it strongly looks like a scam in progress, rate the risk_score very high and set classification to "Scam".
-        """
-        
+        live_prompt = f"Analyze live transcript: {request.transcript_chunk}"
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=live_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema={
-                    "type": "OBJECT",
-                    "properties": {
-                        "risk_score": {"type": "INTEGER"},
-                        "classification": {"type": "STRING"},
-                        "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"},
-                        "transcript": {"type": "STRING"}
-                    },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
-                },
+                response_schema=AnalyzeResponse.model_json_schema(),
                 temperature=0.1,
             ),
         )
-        
-        import json
-        result = json.loads(response.text)
-        return AnalyzeResponse(**result)
-        
+        return AnalyzeResponse(**json.loads(response.text))
     except Exception as e:
-        print(f"Error calling Gemini API for live analysis: {e}")
-        raise HTTPException(status_code=500, detail=f"Error analyzing live transcript: {str(e)}")
-
-
-@app.post("/analyze-audio-live", response_model=AnalyzeResponse)
-async def analyze_audio_live(file: UploadFile = File(...)):
-    """Receives short 5s chunks of audio for rapid transcription and scam analysis."""
-    if not client:
-        raise HTTPException(
-            status_code=500, 
-            detail="Gemini API key is not configured on the server."
-        )
-
-    try:
-        audio_data = await file.read()
-        audio_part = types.Part.from_bytes(
-            data=audio_data,
-            mime_type=file.content_type if file.content_type else "audio/webm"
-        )
-        
-        prompt = """
-        This is a short ~5-second live chunk of an ongoing phone call.
-        First, transcribe what is being said (if anything) and place it in the `transcript` field.
-        Second, analyze it for *immediate* signs of a scam (e.g., asking for OTP, demanding money urgently).
-        If little or nothing is said, output risk_score 0, "Safe", and the empty or partial transcription.
-        If it strongly looks like a scam in progress, rate the risk_score very high and set classification to "Scam".
-        """
-        
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=[prompt, audio_part],
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                response_mime_type="application/json",
-                response_schema={
-                    "type": "OBJECT",
-                    "properties": {
-                        "risk_score": {"type": "INTEGER"},
-                        "classification": {"type": "STRING"},
-                        "explanation": {"type": "STRING"},
-                        "recommended_action": {"type": "STRING"},
-                        "transcript": {"type": "STRING"}
-                    },
-                    "required": ["risk_score", "classification", "explanation", "recommended_action", "transcript"]
-                },
-                temperature=0.1,
-            ),
-        )
-
-        import json
-        result = json.loads(response.text)
-        return AnalyzeResponse(**result)
-
-    except Exception as e:
-        print(f"Error calling Gemini API for live audio chunk: {e}")
-        raise HTTPException(status_code=500, detail=f"Error analyzing live audio chunk: {str(e)}")
-
-
-
+        raise HTTPException(status_code=500, detail=str(e))

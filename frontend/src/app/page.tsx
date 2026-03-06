@@ -21,7 +21,7 @@ interface AnalyzeResponse {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'message' | 'call' | 'url'>('message');
+  const [activeTab, setActiveTab] = useState<'message' | 'call' | 'url' | 'deepfake'>('message');
   const [activeSection, setActiveSection] = useState<string>('');
   const [showComingSoon, setShowComingSoon] = useState(false);
 
@@ -88,6 +88,20 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('audio/')) {
+        setError("Please upload a valid audio file.");
+        return;
+      }
+      setAudioBlob(file);
+      setAudioURL(URL.createObjectURL(file));
+      setError(null);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -404,7 +418,7 @@ export default function Home() {
   };
 
   // --- Custom Audio Player Handlers ---
-  const togglePlayPause = () => {
+  const togglePlayback = () => {
     if (audioPlayerRef.current) {
       if (isPlaying) {
         audioPlayerRef.current.pause();
@@ -503,7 +517,7 @@ export default function Home() {
                 role="tab"
                 aria-selected={activeTab === 'call'}
                 aria-controls="call-scanner"
-                onClick={() => setShowComingSoon(true)}
+                onClick={() => { setActiveTab('call'); setTimeout(() => document.getElementById('call-scanner')?.scrollIntoView({ behavior: 'smooth' }), 50); }}
                 className={`px-6 md:px-8 py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 ${activeTab === 'call' ? 'bg-[var(--color-brand-primary)] text-white shadow-md scale-105' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
               >
                 Check Call
@@ -514,9 +528,19 @@ export default function Home() {
                 aria-selected={activeTab === 'url'}
                 aria-controls="url-scanner"
                 onClick={() => { setActiveTab('url'); setTimeout(() => document.getElementById('url-scanner')?.scrollIntoView({ behavior: 'smooth' }), 50); }}
-                className={`px-6 md:px-8 py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 ${activeTab === 'url' ? 'bg-[var(--color-brand-primary)] text-white shadow-md scale-105' : 'text-[var(--color-base-muted)] hover:text(--color-base-text)]'}`}
+                className={`px-6 md:px-8 py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 ${activeTab === 'url' ? 'bg-[var(--color-brand-primary)] text-white shadow-md scale-105' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
               >
                 Analyze URL
+              </button>
+              <button
+                id="btn-deepfake-detector"
+                role="tab"
+                aria-selected={activeTab === 'deepfake'}
+                aria-controls="deepfake-scanner"
+                onClick={() => { setActiveTab('deepfake'); setTimeout(() => document.getElementById('deepfake-scanner')?.scrollIntoView({ behavior: 'smooth' }), 50); }}
+                className={`px-6 md:px-8 py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 ${activeTab === 'deepfake' ? 'bg-[var(--color-brand-primary)] text-white shadow-md scale-105' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
+              >
+                Deepfake Detector
               </button>
             </div>
           </div>
@@ -530,8 +554,9 @@ export default function Home() {
               {activeTab === 'message' && <MessageSquare className="w-7 h-7 text-[var(--color-brand-primary)]" />}
               {activeTab === 'call' && <Phone className="w-7 h-7 text-[var(--color-brand-primary)]" />}
               {activeTab === 'url' && <LinkIcon className="w-7 h-7 text-[var(--color-brand-primary)]" />}
+              {activeTab === 'deepfake' && <Video className="w-7 h-7 text-[var(--color-brand-primary)]" />}
               <h2 className="text-3xl font-bold tracking-tight text-[var(--color-base-text)]">
-                {activeTab === 'message' ? 'Message Scanner' : activeTab === 'call' ? 'Voice Call Analysis' : 'URL Scanner'}
+                {activeTab === 'message' ? 'Message Scanner' : activeTab === 'call' ? 'Voice Call Analysis' : activeTab === 'url' ? 'URL Scanner' : 'Deepfake Detector'}
               </h2>
             </div>
 
@@ -612,9 +637,20 @@ export default function Home() {
 
                   <div className="flex gap-3 w-full sm:w-auto">
                     {activeTab === 'message' && inputType === 'text' && (
-                      <button onClick={() => setMessage("URGENT: Your SBI account has been blocked. Click here to verify: http://sbi-secure.xyz/login")} className="px-6 py-3 rounded-xl text-sm font-semibold text-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary)]/10 transition-colors mt-auto border border-[var(--color-brand-primary)]/30">
-                        Try an Example
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setMessage("CRITICAL Alert: Your Electricity bill for account 490212 is overdue. Connection will be cut at 10 PM. To avoid disconnection, pay immediately at: http://electricity-pay.com.in")}
+                          className="text-xs font-bold text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 hover:bg-[var(--color-brand-primary)]/20 px-3 py-1.5 rounded-lg transition-all border border-[var(--color-brand-primary)]/20"
+                        >
+                          Try Bill Scam
+                        </button>
+                        <button
+                          onClick={() => setMessage("Dear Customer, you have received a cashback reward of ₹4,999 on your GPay transaction. Claim it now before it expires: https://gpay-reward-claim.co/secure")}
+                          className="text-xs font-bold text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition-all border border-blue-500/20"
+                        >
+                          Try UPI Reward
+                        </button>
+                      </div>
                     )}
                     {(message || url || selectedImage) && (
                       <button onClick={clearInput} className="px-6 py-3 rounded-xl text-sm font-semibold text-[var(--color-base-muted)] hover:text-[var(--color-base-text)] hover:bg-[var(--color-base-bg)] transition-colors mt-auto">
@@ -704,9 +740,23 @@ export default function Home() {
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://example.com"
-                    className="w-full h-16 bg-[var(--color-base-bg)] border border-[var(--color-base-border)] text-[var(--color-base-text)] p-4 pl-14 rounded-2xl outline-none focus:border-[var(--color-brand-primary)] focus:ring-4 focus:ring-[var(--color-brand-primary)]/10 transition-all font-mono shadow-inner placeholder:text-[var(--color-base-muted)] text-lg"
+                    placeholder="Enter URL to check... (e.g., https://onlinesbi-kyc-verify.com)"
+                    className="w-full py-4 text-xl font-medium bg-transparent border-none focus:outline-none text-[var(--color-base-text)] placeholder-[var(--color-base-muted)]"
                   />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setUrl("https://onlinesbi.sbi-login.co/verify")}
+                    className="text-xs font-bold text-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 px-3 py-2 rounded-lg hover:bg-[var(--color-brand-primary)]/20 transition-all font-sans"
+                  >
+                    Try Typosquatting
+                  </button>
+                  <button
+                    onClick={() => setUrl("https://bit.ly/claim-tax-refund-2026")}
+                    className="text-xs font-bold text-blue-500 bg-blue-500/10 px-3 py-2 rounded-lg hover:bg-blue-500/20 transition-all font-sans"
+                  >
+                    Try Shortened Link
+                  </button>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
@@ -809,95 +859,133 @@ export default function Home() {
                     </button>
                   </div>
                 ) : (
-                  <div className="w-full flex flex-col items-center justify-center p-8 md:p-12 border border-[var(--color-base-border)] rounded-[2.5rem] bg-[var(--color-base-bg)] shadow-inner transition-all">
-
-                    {audioURL ? (
-                      <div className="w-full max-w-xl flex items-center justify-between gap-4 bg-[var(--color-base-panel)] p-4 rounded-2xl border border-[var(--color-base-border)] shadow-sm">
-                        <div className="flex items-center gap-4 flex-1">
-                          {/* Hidden actual audio element */}
-                          <audio
-                            ref={audioPlayerRef}
-                            src={audioURL}
-                            onTimeUpdate={handleTimeUpdate}
-                            onLoadedMetadata={handleLoadedMetadata}
-                            onEnded={() => setIsPlaying(false)}
-                          />
-
-                          {/* Custom Play Button */}
-                          <button
-                            onClick={togglePlayPause}
-                            className="w-14 h-14 bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] rounded-2xl flex items-center justify-center text-white transition-all shadow-md flex-shrink-0"
-                          >
-                            {isPlaying ? <Square className="w-5 h-5 fill-white" /> : <Play className="w-6 h-6 ml-1 fill-white" />}
-                          </button>
-
-                          {/* Custom Seek Bar */}
-                          <div className="flex-1 flex flex-col gap-1.5 px-2">
-                            <div className="flex justify-between text-xs text-[var(--color-base-muted)] font-mono font-bold">
-                              <span>{formatTime(audioPlayerRef.current?.currentTime || 0)}</span>
-                              <span>{formatTime(audioDuration)}</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={audioProgress}
-                              onChange={handleSeek}
-                              className="w-full h-2.5 bg-[var(--color-base-border)] rounded-full appearance-none cursor-pointer focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-[var(--color-brand-primary)] [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:scale-110 transition-all"
-                            />
-                          </div>
-                        </div>
-                        <button onClick={clearInput} className="p-3 bg-[var(--color-base-bg)] rounded-xl text-[var(--color-base-muted)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors shadow-inner" aria-label="Delete recording">
-                          <Trash2 className="w-5 h-5" />
+                  <div className="w-full flex flex-col gap-6">
+                    {/* Recording/Upload Toggle */}
+                    <div className="flex justify-center">
+                      <div className="flex items-center bg-[var(--color-base-bg)] p-1 rounded-[1rem] w-fit shadow-inner border border-[var(--color-base-border)]">
+                        <button
+                          onClick={() => { setInputType('text'); clearInput(); }}
+                          className={`px-5 py-2.5 rounded-[0.75rem] text-sm font-semibold transition-all duration-200 ${inputType === 'text' ? 'bg-[var(--color-base-panel)] text-[var(--color-base-text)] shadow-sm' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
+                        >
+                          Live Record
+                        </button>
+                        <button
+                          onClick={() => { setInputType('image'); clearInput(); }}
+                          className={`px-5 py-2.5 rounded-[0.75rem] text-sm font-semibold transition-all duration-200 ${inputType === 'image' ? 'bg-[var(--color-base-panel)] text-[var(--color-base-text)] shadow-sm' : 'text-[var(--color-base-muted)] hover:text-[var(--color-base-text)]'}`}
+                        >
+                          Upload File
                         </button>
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-8 py-4">
-                        <div className={`relative flex items-center justify-center ${isRecording ? 'animate-pulse' : ''} `}>
-                          {isRecording && <div className="absolute inset-0 bg-rose-500 rounded-[2rem] blur-2xl opacity-40 animate-pulse" />}
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center py-10 bg-[var(--color-base-bg)] rounded-[2rem] border border-[var(--color-base-border)] shadow-inner relative overflow-hidden">
+                      {inputType === 'text' ? (
+                        <div className="flex flex-col items-center gap-6">
                           <button
                             onClick={isRecording ? stopRecording : startRecording}
-                            className={`relative z-10 w-28 h-28 rounded-[2rem] flex items-center justify-center transition-all duration-300 ${isRecording
-                              ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_10px_40px_rgba(244,63,94,0.4)] scale-95'
-                              : 'bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] shadow-[0_10px_40px_rgba(168,85,247,0.3)] hover:scale-105'
-                              }`}
+                            className={`w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl relative group ${isRecording ? 'bg-rose-500 animate-pulse' : 'bg-[var(--color-brand-primary)] hover:scale-110 active:scale-90'}`}
                           >
-                            {isRecording ? <Square className="w-10 h-10 text-white fill-white" /> : <Mic className="w-12 h-12 text-white" />}
+                            <div className="absolute inset-0 rounded-full bg-inherit blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
+                            {isRecording ? <Square className="w-10 h-10 text-white fill-current" /> : <Mic className="w-12 h-12 text-white" />}
                           </button>
-                        </div>
 
-                        <div className="text-center">
-                          {isRecording ? (
-                            <>
-                              <h3 className="text-rose-600 dark:text-rose-400 font-black text-2xl tracking-tight">
-                                Recording... {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
-                              </h3>
-                              <div className="flex justify-center items-center gap-1.5 mt-4 mb-4 h-10">
-                                {/* Visualizer Bars */}
-                                {Array.from({ length: 8 }).map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className="w-2 bg-rose-500 rounded-full transition-all duration-75"
-                                    style={{ height: `${Math.max(6, (audioLevel / 255) * 40 * (Math.random() * 0.5 + 0.5))}px` }}
-                                  />
-                                ))}
+                          <div className="text-center">
+                            {isRecording ? (
+                              <>
+                                <h3 className="text-rose-600 dark:text-rose-400 font-black text-2xl tracking-tight">
+                                  Recording... {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+                                </h3>
+                                <div className="flex justify-center items-center gap-1.5 mt-4 mb-4 h-10">
+                                  {Array.from({ length: 8 }).map((_, i) => (
+                                    <div
+                                      key={i}
+                                      className="w-2 bg-rose-500 rounded-full transition-all duration-75"
+                                      style={{ height: `${Math.max(6, (audioLevel / 255) * 40 * (Math.random() * 0.5 + 0.5))}px` }}
+                                    />
+                                  ))}
+                                </div>
+                                <p className="text-[var(--color-base-muted)] text-sm font-medium mt-2">Speak into your microphone. Visualizer should move.</p>
+                              </>
+                            ) : (
+                              <>
+                                <h3 className="text-[var(--color-base-text)] font-bold text-xl tracking-tight">Tap to Record Call</h3>
+                                <p className="text-[var(--color-base-muted)] text-sm font-medium mt-2 max-w-xs text-balance">Put your phone on speaker to record a suspicious call securely on your device.</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-6 w-full px-6">
+                          {audioURL ? (
+                            <div className="w-full max-w-md bg-[var(--color-base-panel)] p-6 rounded-2xl border border-[var(--color-base-border)] shadow-inner flex flex-col gap-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-[var(--color-brand-primary)]/10 flex items-center justify-center">
+                                    <Activity className="w-5 h-5 text-[var(--color-brand-primary)]" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-bold text-[var(--color-base-text)]">Uploaded Audio</p>
+                                    <p className="text-[10px] uppercase tracking-widest font-bold text-[var(--color-base-muted)]">Ready for analysis</p>
+                                  </div>
+                                </div>
+                                <button onClick={clearInput} className="text-[var(--color-base-muted)] hover:text-rose-500 transition-colors">
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
                               </div>
-                              <p className="text-[var(--color-base-muted)] text-sm font-medium mt-2">Speak into your microphone. Visualizer should move.</p>
-                            </>
+                              <audio
+                                ref={audioPlayerRef}
+                                src={audioURL}
+                                className="hidden"
+                                onTimeUpdate={handleTimeUpdate}
+                                onLoadedMetadata={handleLoadedMetadata}
+                                onEnded={() => setIsPlaying(false)}
+                              />
+                              <div className="flex items-center gap-4">
+                                <button
+                                  onClick={togglePlayback}
+                                  className="w-12 h-12 rounded-full bg-[var(--color-brand-primary)] text-white flex items-center justify-center hover:scale-105 transition-all shadow-md"
+                                >
+                                  {isPlaying ? <Square className="w-4 h-4 fill-current" /> : <Play className="w-5 h-5 ml-1" />}
+                                </button>
+                                <div className="flex-1">
+                                  <div className="relative w-full h-1.5 bg-[var(--color-base-bg)] rounded-full overflow-hidden border border-[var(--color-base-border)]">
+                                    <div
+                                      className="absolute inset-y-0 left-0 bg-[var(--color-brand-primary)] transition-all duration-100"
+                                      style={{ width: `${audioProgress}%` }}
+                                    />
+                                  </div>
+                                  <div className="flex justify-between mt-2 text-[10px] font-bold text-[var(--color-base-muted)]">
+                                    <span>{Math.floor(audioPlayerRef.current?.currentTime || 0)}s</span>
+                                    <span>{Math.floor(audioDuration || 0)}s</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           ) : (
-                            <>
-                              <h3 className="text-[var(--color-base-text)] font-bold text-xl tracking-tight">Tap to Record Call</h3>
-                              <p className="text-[var(--color-base-muted)] text-sm font-medium mt-2 max-w-xs text-balance">Put your phone on speaker to record a suspicious call securely on your device.</p>
-                            </>
+                            <div
+                              onClick={() => audioInputRef.current?.click()}
+                              className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-base-border)] hover:border-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary)]/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all gap-3 bg-[var(--color-base-bg)] shadow-inner"
+                            >
+                              <div className="w-14 h-14 bg-[var(--color-base-panel)] rounded-full flex items-center justify-center shadow-sm">
+                                <UploadCloud className="w-7 h-7 text-[var(--color-brand-primary)]" />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[var(--color-base-text)] font-semibold text-lg">Click to upload audio</p>
+                                <p className="text-sm text-[var(--color-base-muted)] mt-1">MP3, WAV, WEBM up to 10MB</p>
+                              </div>
+                              <input
+                                type="file"
+                                accept="audio/*"
+                                ref={audioInputRef}
+                                className="hidden"
+                                onChange={handleAudioUpload}
+                              />
+                            </div>
                           )}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
 
-                {!interruptionAlert && (
-                  <div className="w-full flex flex-col gap-6">
                     {/* Live STT Monitor */}
                     <div className="w-full bg-[var(--color-base-bg)] border border-[var(--color-base-border)] rounded-3xl p-6 md:p-8 shadow-inner">
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
@@ -938,7 +1026,6 @@ export default function Home() {
                       ) : <div />}
 
                       <div className="flex gap-3 w-full sm:w-auto">
-                        {/* Only show analyze button if there is a recorded blob */}
                         <button
                           onClick={handleAnalyze}
                           disabled={isAnalyzing || !audioBlob || isRecording || isLiveMonitoring}
@@ -948,73 +1035,90 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {/* Results Section for Voice Call */}
-                {result && (
-                  <div className="mt-8 pt-8 border-t border-[var(--color-base-border)] animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Results Section for Voice Call */}
+                    {result && (
+                      <div className="mt-8 pt-8 border-t border-[var(--color-base-border)] animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-                      {/* Risk Score */}
-                      <div className="md:col-span-1 bg-[var(--color-base-bg)] rounded-[2rem] p-6 border border-[var(--color-base-border)] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
-                        <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
-                        <h3 className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
-                        <div className="relative w-28 h-28 flex items-center justify-center z-10">
-                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(168,85,247,0.1)" strokeWidth="8" />
-                            <circle
-                              cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
-                              strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
-                              className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
-                            />
-                          </svg>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--color-base-text)]">
-                            <span className="text-3xl font-black">{result.risk_score}</span>
-                            <span className="text-[10px] text-[var(--color-base-muted)] font-bold">%</span>
+                          {/* Risk Score */}
+                          <div className="md:col-span-1 bg-[var(--color-base-bg)] rounded-[2rem] p-6 border border-[var(--color-base-border)] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+                            <div className={`absolute inset-0 opacity-10 ${result.classification === 'Safe' ? 'bg-emerald-500' : result.classification === 'Suspicious' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                            <h3 className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold mb-4 z-10">Risk Score</h3>
+                            <div className="relative w-28 h-28 flex items-center justify-center z-10">
+                              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(168,85,247,0.1)" strokeWidth="8" />
+                                <circle
+                                  cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
+                                  strokeDasharray={`${result.risk_score * 2.827} 282.7`} strokeLinecap="round"
+                                  className={`transition-all duration-1000 ${getClassificationColor(result.classification, false)}`}
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--color-base-text)]">
+                                <span className="text-3xl font-black">{result.risk_score}</span>
+                                <span className="text-[10px] text-[var(--color-base-muted)] font-bold">%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Details */}
+                          <div className="md:col-span-3 flex flex-col gap-4">
+                            <div className="bg-[var(--color-base-bg)] rounded-3xl p-5 border border-[var(--color-base-border)] flex items-center justify-between shadow-sm">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${result.classification === 'Safe' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : result.classification === 'Suspicious' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                  {result.classification === 'Safe' ? <Shield className="w-6 h-6" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
+                                </div>
+                                <div>
+                                  <p className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold">Status</p>
+                                  <p className="text-xl font-bold text-[var(--color-base-text)] tracking-tight">{result.classification}</p>
+                                </div>
+                              </div>
+                              <div className={`px-5 py-2 rounded-full border text-xs font-black uppercase tracking-widest shadow-sm ${getClassificationColor(result.classification)}`}>
+                                {result.classification}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                              {result.transcript && (
+                                <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                  <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
+                                    <MessageSquare className="w-5 h-5 text-[var(--color-brand-primary)]" /> Processed Transcript
+                                  </h4>
+                                  <p className="relative z-10 text-sm text-[var(--color-base-muted)] leading-relaxed font-medium bg-[var(--color-base-panel)] group-hover:bg-[var(--color-base-bg)] p-4 rounded-2xl border border-[var(--color-base-border)] transition-colors duration-300 shadow-inner group-hover:shadow-sm">"{result.transcript}"</p>
+                                </div>
+                              )}
+                              <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] shadow-[0_4px_14px_rgba(168,85,247,0.3)] hover:shadow-[0_10px_30px_-5px_rgba(168,85,247,0.5)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+                                <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3 tracking-wide">
+                                  <CheckCircle2 className="w-5 h-5 text-white" /> Recommended Action
+                                </h4>
+                                <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed group-hover:text-white transition-colors duration-300">{result.recommended_action}</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-
-                      {/* Details */}
-                      <div className="md:col-span-3 flex flex-col gap-4">
-                        <div className="bg-[var(--color-base-bg)] rounded-3xl p-5 border border-[var(--color-base-border)] flex items-center justify-between shadow-sm">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${result.classification === 'Safe' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : result.classification === 'Suspicious' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                              {result.classification === 'Safe' ? <Shield className="w-6 h-6" /> : result.classification === 'Suspicious' ? <AlertTriangle className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
-                            </div>
-                            <div>
-                              <p className="text-xs text-[var(--color-base-muted)] uppercase tracking-widest font-bold">Status</p>
-                              <p className="text-xl font-bold text-[var(--color-base-text)] tracking-tight">{result.classification}</p>
-                            </div>
-                          </div>
-                          <div className={`px-5 py-2 rounded-full border text-xs font-black uppercase tracking-widest shadow-sm ${getClassificationColor(result.classification)}`}>
-                            {result.classification}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                          {result.transcript && (
-                            <div className="bg-[var(--color-base-bg)] rounded-3xl p-6 border border-[var(--color-base-border)] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
-                              <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                              <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-[var(--color-base-text)] mb-3">
-                                <MessageSquare className="w-5 h-5 text-[var(--color-brand-primary)]" /> Processed Transcript
-                              </h4>
-                              <p className="relative z-10 text-sm text-[var(--color-base-muted)] leading-relaxed font-medium bg-[var(--color-base-panel)] group-hover:bg-[var(--color-base-bg)] p-4 rounded-2xl border border-[var(--color-base-border)] transition-colors duration-300 shadow-inner group-hover:shadow-sm">"{result.transcript}"</p>
-                            </div>
-                          )}
-                          <div className="bg-[var(--color-brand-primary)] rounded-3xl p-6 border border-[var(--color-brand-primary-hover)] shadow-[0_4px_14px_rgba(168,85,247,0.3)] hover:shadow-[0_10px_30px_-5px_rgba(168,85,247,0.5)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-                            <h4 className="relative z-10 flex items-center gap-2 text-sm font-bold text-white mb-3 tracking-wide">
-                              <CheckCircle2 className="w-5 h-5 text-white" /> Recommended Action
-                            </h4>
-                            <p className="relative z-10 text-sm font-semibold text-white/90 leading-relaxed group-hover:text-white transition-colors duration-300">{result.recommended_action}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
+              </div>
+            ) : activeTab === 'deepfake' ? (
+              <div id="deepfake-scanner" className="flex flex-col gap-8 items-center py-6">
+                <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20">
+                  <Video className="w-10 h-10 text-rose-500" />
+                </div>
+                <div className="text-center max-w-md">
+                  <h3 className="text-2xl font-bold text-[var(--color-base-text)] mb-3">Deepfake Detector</h3>
+                  <p className="text-[var(--color-base-muted)] font-medium leading-relaxed">
+                    Analyze images and videos for signs of AI manipulation. Our advanced detection models flag synthetic media with 99% accuracy.
+                  </p>
+                </div>
+                <div className="w-full max-w-xl p-8 border-2 border-dashed border-[var(--color-base-border)] rounded-3xl bg-[var(--color-base-bg)] flex flex-col items-center gap-4 hover:border-[var(--color-brand-primary)] transition-all cursor-pointer group">
+                  <UploadCloud className="w-12 h-12 text-[var(--color-base-muted)] group-hover:text-[var(--color-brand-primary)] transition-colors" />
+                  <p className="text-[var(--color-base-text)] font-bold">Upload video or image to scan</p>
+                  <p className="text-xs text-[var(--color-base-muted)] font-bold uppercase tracking-widest">Supports MP4, MOV, PNG, JPG</p>
+                </div>
               </div>
             ) : (
               <div className="py-20 flex flex-col items-center justify-center text-center">
@@ -1029,7 +1133,7 @@ export default function Home() {
         </section>
 
         {/* --- STATS SECTION --- */}
-        <section id="resources" className="w-full max-w-6xl mx-auto px-4 py-24 text-center">
+        < section id="resources" className="w-full max-w-6xl mx-auto px-4 py-24 text-center" >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--color-base-text)] tracking-tight">The Growing Threat</h2>
           <p className="text-[var(--color-base-muted)] mb-16 text-lg font-medium">Digital scams are costing Indians billions every year</p>
 
@@ -1089,10 +1193,10 @@ export default function Home() {
               </small>
             </div>
           </div>
-        </section>
+        </section >
 
         {/* --- SOCIAL PROOF / HACKATHON BADGE (Issue 9) --- */}
-        <section className="w-full max-w-4xl mx-auto px-4 py-12 flex flex-col items-center">
+        < section className="w-full max-w-4xl mx-auto px-4 py-12 flex flex-col items-center" >
           <div className="flex flex-col md:flex-row items-center gap-8 bg-gradient-to-r from-[var(--color-brand-primary)]/5 to-transparent p-8 rounded-[3rem] border border-[var(--color-brand-primary)]/10 shadow-sm transition-all hover:shadow-md">
             <div className="w-32 h-32 md:w-40 md:h-40 relative group">
               <div className="absolute inset-0 bg-[var(--color-brand-primary)]/20 blur-2xl rounded-full group-hover:bg-[var(--color-brand-primary)]/30 transition-all" />
@@ -1109,10 +1213,10 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </section>
+        </section >
 
         {/* --- FEATURES SECTION --- */}
-        <section id="products" className="w-full max-w-6xl mx-auto px-4 pb-24 pt-10">
+        < section id="products" className="w-full max-w-6xl mx-auto px-4 pb-24 pt-10" >
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-[var(--color-base-text)] tracking-tight">Comprehensive Protection</h2>
             <p className="text-[var(--color-base-muted)] font-medium text-lg">Multiple layers of AI-powered security to keep you safe</p>
@@ -1134,10 +1238,10 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </section>
+        </section >
 
         {/* --- HOW IT WORKS SECTION --- */}
-        <section className="w-full max-w-5xl mx-auto px-4 pb-32 text-center">
+        < section className="w-full max-w-5xl mx-auto px-4 pb-32 text-center" >
           <h2 className="text-4xl font-bold mb-4 text-[var(--color-base-text)] tracking-tight">How It Works</h2>
           <p className="text-[var(--color-base-muted)] mb-20 text-lg font-medium">Protection in three simple steps</p>
 
@@ -1158,7 +1262,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </section>
+        </section >
 
         <section id="contact" className="w-full max-w-4xl mx-auto px-4 py-24">
           <div className="text-center mb-12">
@@ -1188,10 +1292,10 @@ export default function Home() {
           </form>
         </section>
 
-      </main>
+      </main >
 
       {/* --- FOOTER --- */}
-      <footer className="w-full bg-[var(--color-base-panel)] border-t border-[var(--color-base-border)] pt-20 pb-12 px-6 lg:px-20 mt-10">
+      < footer className="w-full bg-[var(--color-base-panel)] border-t border-[var(--color-base-border)] pt-20 pb-12 px-6 lg:px-20 mt-10" >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12 mb-16">
           <div className="max-w-xs">
             <div className="flex items-center gap-2 mb-6">
@@ -1246,30 +1350,32 @@ export default function Home() {
             <a href="mailto:bugs@sentinelai.in?subject=Bug Report" className="hover:text-[var(--color-base-text)] transition-colors">Report a Bug</a>
           </div>
         </div>
-      </footer>
+      </footer >
 
       {/* Coming Soon Modal (Issue 22) */}
-      {showComingSoon && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="glass-panel p-8 max-w-md w-full rounded-[2.5rem] bg-[var(--color-base-panel)] border border-[var(--color-brand-primary)]/20 shadow-2xl text-center flex flex-col items-center gap-6">
-            <div className="w-20 h-20 bg-[var(--color-brand-primary)]/10 rounded-full flex items-center justify-center">
-              <Cpu className="w-10 h-10 text-[var(--color-brand-primary)] animate-pulse" />
+      {
+        showComingSoon && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="glass-panel p-8 max-w-md w-full rounded-[2.5rem] bg-[var(--color-base-panel)] border border-[var(--color-brand-primary)]/20 shadow-2xl text-center flex flex-col items-center gap-6">
+              <div className="w-20 h-20 bg-[var(--color-brand-primary)]/10 rounded-full flex items-center justify-center">
+                <Cpu className="w-10 h-10 text-[var(--color-brand-primary)] animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-[var(--color-base-text)] mb-2">Coming Soon</h3>
+                <p className="text-[var(--color-base-muted)] leading-relaxed">
+                  The Call Analysis feature is currently in closed beta. We're training our AI on new voice phishing patterns to ensure maximum safety.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowComingSoon(false)}
+                className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] text-white py-3 rounded-2xl font-bold transition-all hover:-translate-y-1 shadow-lg active:translate-y-0"
+              >
+                Got it!
+              </button>
             </div>
-            <div>
-              <h3 className="text-2xl font-bold text-[var(--color-base-text)] mb-2">Coming Soon</h3>
-              <p className="text-[var(--color-base-muted)] leading-relaxed">
-                The Call Analysis feature is currently in closed beta. We're training our AI on new voice phishing patterns to ensure maximum safety.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowComingSoon(false)}
-              className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] text-white py-3 rounded-2xl font-bold transition-all hover:-translate-y-1 shadow-lg active:translate-y-0"
-            >
-              Got it!
-            </button>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

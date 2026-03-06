@@ -298,9 +298,18 @@ export default function Home() {
   };
 
   const handleAnalyze = async () => {
-    if (activeTab === 'message' && inputType === 'text' && !message.trim()) return;
-    if (activeTab === 'message' && inputType === 'image' && !selectedImage) return;
-    if (activeTab === 'url' && !url.trim()) return;
+    if (activeTab === 'message' && inputType === 'text' && !message.trim()) {
+      setError("Please enter a message to analyze.");
+      return;
+    }
+    if (activeTab === 'message' && inputType === 'image' && !selectedImage) {
+      setError("Please upload an image to analyze.");
+      return;
+    }
+    if (activeTab === 'url' && !url.trim()) {
+      setError("Please enter a URL to analyze.");
+      return;
+    }
 
     setIsAnalyzing(true);
     setError(null);
@@ -553,6 +562,11 @@ export default function Home() {
                   ) : <div />}
 
                   <div className="flex gap-3 w-full sm:w-auto">
+                    {activeTab === 'message' && inputType === 'text' && (
+                      <button onClick={() => setMessage("URGENT: Your SBI account has been blocked. Click here to verify: http://sbi-secure.xyz/login")} className="px-6 py-3 rounded-xl text-sm font-semibold text-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary)]/10 transition-colors mt-auto border border-[var(--color-brand-primary)]/30">
+                        Try an Example
+                      </button>
+                    )}
                     {(message || url || selectedImage) && (
                       <button onClick={clearInput} className="px-6 py-3 rounded-xl text-sm font-semibold text-[var(--color-base-muted)] hover:text-[var(--color-base-text)] hover:bg-[var(--color-base-bg)] transition-colors mt-auto">
                         Clear
@@ -560,7 +574,7 @@ export default function Home() {
                     )}
                     <button
                       onClick={handleAnalyze}
-                      disabled={isAnalyzing || (inputType === 'text' && !message) || (inputType === 'image' && !selectedImage)}
+                      disabled={isAnalyzing}
                       className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] text-white px-8 py-3 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(168,85,247,0.39)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.23)] hover:-translate-y-0.5 active:translate-y-0"
                     >
                       {isAnalyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Send className="w-5 h-5" /> Analyze</>}

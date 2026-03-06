@@ -1,0 +1,1015 @@
+﻿SENTINEL AI — WEBSITE AUDIT
+Complete Problem & Solution Reference for AI-Assisted Repair
+https://sentinel-ai-1.netlify.app
+Audit Date: March 2026  |  Total Issues Found: 24
+#
+	Issue
+	Severity
+	Category
+	1
+	All nav links point to #
+	🔴 Critical
+	Functionality
+	2
+	Hero CTA buttons do nothing
+	🔴 Critical
+	Functionality
+	3
+	Message Scanner Analyze button non-functional
+	🔴 Critical
+	Core Product
+	4
+	Image tab in scanner likely broken
+	🔴 Critical
+	Core Product
+	5
+	All footer links dead
+	🔴 Critical
+	Navigation
+	6
+	No contact page or information
+	🔴 Critical
+	Trust
+	7
+	Statistics have no source citations
+	🟠 Major
+	Trust
+	8
+	85% detection rate has no context
+	🟠 Major
+	Trust
+	9
+	No social proof anywhere
+	🟠 Major
+	Credibility
+	10
+	Team cards show initials, not photos
+	🟠 Major
+	Trust
+	11
+	"Incredibly high accuracy" is vague
+	🟠 Major
+	Credibility
+	12
+	No smooth scroll behavior
+	🟡 Moderate
+	UX
+	13
+	No active nav highlight on scroll
+	🟡 Moderate
+	UX
+	14
+	Hero section has no visuals
+	🟡 Moderate
+	Design
+	15
+	Scanner has no placeholder or example
+	🟡 Moderate
+	UX
+	16
+	No keyboard / ARIA accessibility
+	🟡 Moderate
+	Accessibility
+	17
+	Theme toggle has no state icon
+	🟡 Moderate
+	UX
+	18
+	Missing meta description
+	🔵 Minor
+	SEO
+	19
+	Missing Open Graph tags
+	🔵 Minor
+	SEO/Sharing
+	20
+	Missing favicon
+	🔵 Minor
+	Branding
+	21
+	No robots.txt or sitemap.xml
+	🔵 Minor
+	SEO
+	22
+	"Check Call" has no UI or Coming Soon label
+	🔵 Minor
+	UX
+	23
+	No custom 404 page
+	🔵 Minor
+	UX
+	24
+	Copyright year format looks odd
+	🔵 Minor
+	Branding
+	________________
+
+
+SECTION 0 — HOW TO USE THIS DOCUMENT
+This document is written for an AI coding assistant. Each numbered section below describes one problem found on the Sentinel AI website. Each problem entry follows a strict, machine-readable format:
+
+
+* WHAT IT IS — a plain-English description of the problem.
+* WHERE TO FIND IT — the exact HTML element, file, or route affected.
+* WHY IT MATTERS — the user impact and business cost of leaving it unfixed.
+* EXACT SOLUTION — the complete code, attribute changes, or architectural change needed. Copy-paste ready.
+* ACCEPTANCE CRITERIA — a checklist of conditions that must pass before the issue is considered resolved.
+
+
+The AI should work through this document sequentially. All code examples are complete and ready to implement unless a placeholder such as [YOUR_VALUE] appears — those must be filled in with project-specific data.
+
+
+ISSUE 1 — ALL NAVIGATION LINKS ARE BROKEN
+Severity: CRITICAL — Broken Functionality
+Category: Functionality / Navigation
+
+
+WHAT IT IS
+The three top navigation links — "Products", "Resources", and "Contact" — all have href="#". When a user clicks any of them, the page simply scrolls to the very top. Nothing useful happens. The site is essentially unnavigable from the navbar.
+WHERE TO FIND IT
+In the main navigation HTML, look for the <nav> element. The links inside look like this:
+<a href="#">Products</a>
+<a href="#">Resources</a>
+<a href="#">Contact</a>
+WHY IT MATTERS
+Navigation is the primary wayfinding system on a website. Non-functional navigation links create an immediate trust deficit. Users (and investors/judges at a hackathon) who click and go nowhere assume the product is incomplete. It also breaks accessibility since screen readers announce these as valid links.
+EXACT SOLUTION
+Option A — Anchor links to existing sections on the page (recommended for a single-page app):
+Step 1: Add id attributes to the relevant sections in your HTML:
+<section id="products"> ... </section>
+<section id="resources"> ... </section>
+<section id="contact"> ... </section>
+Step 2: Update the navbar anchor hrefs to point to those IDs:
+<a href="#products">Products</a>
+<a href="#resources">Resources</a>
+<a href="#contact">Contact</a>
+Option B — If these are separate pages, use proper routes:
+<a href="/products">Products</a>
+<a href="/resources">Resources</a>
+<a href="/contact">Contact</a>
+Also add CSS smooth scrolling globally:
+html { scroll-behavior: smooth; }
+ACCEPTANCE CRITERIA
+* Clicking "Products" in the navbar scrolls to or loads the Products section.
+* Clicking "Resources" in the navbar scrolls to or loads a Resources section.
+* Clicking "Contact" in the navbar scrolls to or loads a Contact section.
+* No nav link points to a bare # anymore.
+
+
+ISSUE 2 — HERO CTA BUTTONS DO NOTHING
+Severity: CRITICAL — Broken Functionality
+Category: Functionality / UX
+
+
+WHAT IT IS
+The three call-to-action buttons in the hero section — "Scan Message", "Check Call", and "Analyze URL" — do not trigger any visible action. They do not scroll the user to the scanner tool, open a modal, or change any state on the page. They appear entirely decorative, which defeats their entire purpose as the primary conversion buttons on the most-viewed section of the site.
+WHERE TO FIND IT
+These are the three <button> or <a> elements directly below the hero headline and subtitle, rendered in a horizontal row.
+WHY IT MATTERS
+These are the highest-visibility interactive elements on the entire site. A first-time visitor sees them first. If they click and nothing happens, they immediately lose trust and leave. Each button should be the fastest possible path to actually using the product.
+EXACT SOLUTION
+Each button should scroll smoothly to the corresponding section of the scanner:
+// "Scan Message" button
+document.querySelector("#btn-scan-message").addEventListener("click", () => {
+  document.querySelector("#message-scanner").scrollIntoView({ behavior: "smooth" });
+  // Also activate the "Text" tab if tabs exist
+  activateTab("text");
+});
+
+
+// "Check Call" button
+document.querySelector("#btn-check-call").addEventListener("click", () => {
+  document.querySelector("#call-scanner").scrollIntoView({ behavior: "smooth" });
+});
+
+
+// "Analyze URL" button
+document.querySelector("#btn-analyze-url").addEventListener("click", () => {
+  document.querySelector("#url-scanner").scrollIntoView({ behavior: "smooth" });
+});
+Add the corresponding id attributes to the scanner sections: id="message-scanner", id="call-scanner", id="url-scanner".
+If "Check Call" is not yet built, the button should instead show a "Coming Soon" modal or tooltip rather than doing nothing.
+ACCEPTANCE CRITERIA
+* Clicking "Scan Message" scrolls the viewport to the Message Scanner section.
+* Clicking "Analyze URL" scrolls to the URL scanner section.
+* "Check Call" either scrolls to a functional call scanner or shows a clear "Coming Soon" message.
+* All scrolling uses smooth behavior, not instant jumps.
+
+
+ISSUE 3 — MESSAGE SCANNER ANALYZE BUTTON IS NON-FUNCTIONAL
+Severity: CRITICAL — Core Product Broken
+Category: Core Product
+
+
+WHAT IT IS
+The "Analyze" button inside the Message Scanner section either does nothing, or submits the text without showing any result. There is no loading indicator, no result card, no error for empty input, and no visual feedback at all. This is the primary feature of the entire product and it does not work.
+WHERE TO FIND IT
+The Message Scanner section contains a textarea (for text input) and an "Analyze" button. The button's click handler is either missing, or it calls an API but the result display code is absent.
+WHY IT MATTERS
+This is literally the product. If the scanner does not work, there is no product to evaluate, use, or trust. Every visitor who tries it and sees nothing will leave and never return. This is the single most important thing to fix on the entire site.
+EXACT SOLUTION — Complete Implementation
+Step 1: HTML structure for the scanner with proper IDs:
+<section id="message-scanner">
+  <textarea id="scanner-input"
+    placeholder="Paste a suspicious SMS, WhatsApp message, or email here...">
+  </textarea>
+  <button id="analyze-btn" onclick="analyzeMessage()">Analyze</button>
+  <div id="scanner-result" style="display:none;"></div>
+  <div id="scanner-error" style="display:none;"></div>
+  <div id="scanner-loading" style="display:none;">Analyzing...</div>
+</section>
+
+
+Step 2: JavaScript function with full error handling:
+async function analyzeMessage() {
+  const input = document.getElementById("scanner-input").value.trim();
+  const resultDiv = document.getElementById("scanner-result");
+  const errorDiv = document.getElementById("scanner-error");
+  const loadingDiv = document.getElementById("scanner-loading");
+
+
+  // Input validation
+  if (!input) {
+    errorDiv.textContent = "Please enter a message to analyze.";
+    errorDiv.style.display = "block";
+    return;
+  }
+
+
+  // Reset UI
+  errorDiv.style.display = "none";
+  resultDiv.style.display = "none";
+  loadingDiv.style.display = "block";
+
+
+  try {
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: input })
+    });
+    if (!response.ok) throw new Error("Server error");
+    const data = await response.json();
+
+
+    // Show result card
+    loadingDiv.style.display = "none";
+    resultDiv.innerHTML = `
+      <div class="result-card risk-${data.risk_level}">
+        <h3>Risk Level: ${data.risk_label}</h3>
+        <p>Confidence: ${data.confidence}%</p>
+        <p>${data.explanation}</p>
+        <ul>${data.indicators.map(i => `<li>${i}</li>`).join("")}</ul>
+      </div>
+    `;
+    resultDiv.style.display = "block";
+
+
+  } catch (err) {
+    loadingDiv.style.display = "none";
+    errorDiv.textContent = "Analysis failed. Please try again.";
+    errorDiv.style.display = "block";
+  }
+}
+
+
+Step 3: Add an "Try an Example" button that pre-fills a sample scam message:
+<button onclick="fillExample()">Try an Example</button>
+function fillExample() {
+  document.getElementById("scanner-input").value =
+    "URGENT: Your SBI account has been blocked. Click here to verify: http://sbi-secure.xyz/login";
+}
+ACCEPTANCE CRITERIA
+* Clicking Analyze with an empty input shows a validation error message.
+* Clicking Analyze with valid text shows a loading spinner while the request is in flight.
+* A result card appears with at minimum: risk level, confidence score, and explanation.
+* If the API call fails, a friendly error message appears (not a console error).
+* The Try an Example button pre-fills a sample scam message.
+
+
+ISSUE 4 — IMAGE TAB IN SCANNER IS BROKEN
+Severity: CRITICAL — Core Product Broken
+Category: Core Product
+
+
+WHAT IT IS
+The scanner section has a Text/Image tab toggle. When the "Image" tab is selected, it likely either shows nothing, shows the same textarea, or shows a file input that does not actually send the image for analysis. The image-based scam detection pathway is non-functional.
+WHERE TO FIND IT
+The tab switcher buttons labeled "Text" and "Image" are inside the Message Scanner section. Look for the button or div elements that control which input type is shown.
+EXACT SOLUTION
+Complete tab-switching implementation with image upload support:
+<!-- HTML: Two tab panels -->
+<div class="tab-buttons" role="tablist">
+  <button role="tab" aria-selected="true"
+    aria-controls="panel-text" id="tab-text"
+    onclick="switchTab('text')">Text</button>
+  <button role="tab" aria-selected="false"
+    aria-controls="panel-image" id="tab-image"
+    onclick="switchTab('image')">Image</button>
+</div>
+
+
+<div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+  <textarea id="scanner-input" placeholder="Paste suspicious message here..."></textarea>
+</div>
+
+
+<div id="panel-image" role="tabpanel" aria-labelledby="tab-image" hidden>
+  <input type="file" id="image-upload" accept=".jpg,.jpeg,.png,.webp">
+  <div id="image-preview"></div>
+  <p>Accepted: JPG, PNG, WEBP. Max size: 5MB.</p>
+</div>
+
+
+// JavaScript: tab switching
+function switchTab(tab) {
+  document.getElementById("panel-text").hidden = (tab !== "text");
+  document.getElementById("panel-image").hidden = (tab !== "image");
+  document.getElementById("tab-text").setAttribute("aria-selected", tab === "text");
+  document.getElementById("tab-image").setAttribute("aria-selected", tab === "image");
+}
+
+
+// Image preview on file select
+document.getElementById("image-upload").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("File too large. Max 5MB.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById("image-preview").innerHTML =
+      `<img src="${ev.target.result}" style="max-width:300px; border-radius:8px;">`;
+  };
+  reader.readAsDataURL(file);
+});
+ACCEPTANCE CRITERIA
+* Clicking "Image" tab hides the textarea and shows the file upload input.
+* Clicking "Text" tab shows the textarea and hides the file upload input.
+* Uploading an image shows a thumbnail preview below the upload field.
+* Files over 5MB are rejected with a user-facing error.
+* The Analyze button works for both text and image inputs.
+
+
+ISSUE 5 — ALL FOOTER LINKS ARE DEAD
+Severity: CRITICAL — Navigation / Legal
+Category: Navigation
+
+
+WHAT IT IS
+Every link in the footer — "About Us", "Documentation", "Privacy Policy", "Terms of Service", "Disclaimer", "Cookie Policy", and "Report a Bug" — has href="#". All seven links do nothing. The Privacy Policy and Terms of Service being dead links is particularly serious: it is a legal violation under GDPR, India's DPDP Act 2023, and standard App Store / Play Store policy.
+EXACT SOLUTION — Per Link
+1. Privacy Policy — CREATE /privacy.html with real content:
+<a href="/privacy">Privacy Policy</a>
+Minimum required content in the privacy policy: what data you collect, how it is stored, who can access it, how users can delete it, and contact info for data requests.
+
+
+2. Terms of Service — CREATE /terms.html:
+<a href="/terms">Terms of Service</a>
+
+
+3. About Us — scroll anchor or separate page:
+<a href="#team">About Us</a>
+<!-- Add id="team" to the team section in the HTML -->
+
+
+4. Documentation — CREATE /docs.html or link to a GitHub wiki:
+<a href="/docs">Documentation</a>
+
+
+5. Report a Bug — use mailto or Google Form:
+<a href="mailto:bugs@sentinelai.in?subject=Bug Report">Report a Bug</a>
+
+
+6. Disclaimer and Cookie Policy — create basic pages at /disclaimer and /cookies.
+ACCEPTANCE CRITERIA
+* Every footer link navigates to a page or section with actual content.
+* Privacy Policy page exists and includes data collection disclosures.
+* Terms of Service page exists.
+* No footer link points to a bare # anymore.
+
+
+ISSUE 6 — NO CONTACT PAGE OR INFORMATION
+Severity: CRITICAL — Trust / Accessibility
+Category: Trust
+
+
+WHAT IT IS
+"Contact" appears in the navbar, implying users can get in touch. There is no email address, contact form, social media link, or any other contact mechanism on the entire site.
+EXACT SOLUTION
+Add a contact section to the page with id="contact" and include:
+<section id="contact">
+  <h2>Get In Touch</h2>
+  <p>Email: <a href="mailto:hello@sentinelai.in">hello@sentinelai.in</a></p>
+  <p>We typically respond within 24 hours.</p>
+  <!-- Optionally add a simple HTML form -->
+  <form action="https://formsubmit.co/[YOUR_EMAIL]" method="POST">
+    <input type="text" name="name" placeholder="Your Name" required>
+    <input type="email" name="email" placeholder="Your Email" required>
+    <textarea name="message" placeholder="Your Message" required></textarea>
+    <button type="submit">Send Message</button>
+  </form>
+</section>
+Use a free form backend like formsubmit.co or Netlify Forms (since the site is on Netlify, Netlify Forms is the easiest option — just add netlify to the form tag: <form netlify>).
+ACCEPTANCE CRITERIA
+* A Contact section exists on the page with id="contact".
+* At least one valid email address is displayed.
+* A contact form exists and successfully sends messages.
+* The Contact nav link scrolls to this section.
+
+
+________________
+
+
+ISSUE 7 — STATISTICS HAVE NO SOURCE CITATIONS
+Severity: MAJOR — Trust / Credibility
+Category: Trust
+
+
+WHAT IT IS
+The stats section displays large, impactful numbers — "1,25,000 crore lost annually", "95,000+ daily scam attempts", "77% victims unaware" — with zero citations, sources, or methodology. A security product with unsourced statistics destroys credibility with technically literate users.
+EXACT SOLUTION
+Below each stat figure, add a small source citation. Example:
+<div class="stat-card">
+  <h3>1,25,000 crore</h3>
+  <p>Lost to Scams Annually in India</p>
+  <small class="source">
+    Source: <a href="[URL]" target="_blank">
+    Ministry of Home Affairs Cybercrime Report 2023</a>
+  </small>
+</div>
+Suggested authoritative sources to research and cite:
+* Ministry of Home Affairs Annual Report on Cybercrime — mha.gov.in
+* NCRB (National Crime Records Bureau) — ncrb.gov.in
+* RBI Annual Report on Payment Fraud — rbi.org.in
+* CERT-IN (Indian Computer Emergency Response Team) — cert-in.org.in
+Style for the source citation (small, muted, does not distract):
+.source { font-size: 11px; color: #9E9E9E; display: block; margin-top: 4px; }
+.source a { color: #1565C0; text-decoration: underline; }
+ACCEPTANCE CRITERIA
+* Every statistic has a visible source citation beneath it.
+* At least two of the citations link to official government or research sources.
+* The source text is styled subtly and does not compete visually with the stat.
+
+
+ISSUE 8 — "85% DETECTION RATE" HAS NO CONTEXT
+Severity: MAJOR — Trust / Misleading Metric
+Category: Trust
+
+
+WHAT IT IS
+The "85% Detection Rate" metric appears prominently on the page with the subtitle "With our AI technology". This is a self-reported number with no dataset, no methodology, no date, and no definition of what "detection" means. This is the most dangerous trust problem on the site because it could cause users to over-rely on the product.
+EXACT SOLUTION
+Replace the bare stat with a contextualized version:
+<!-- BEFORE (bad) -->
+<h4>85%</h4>
+<p>Detection Rate</p>
+
+
+<!-- AFTER (good) -->
+<h4>85%</h4>
+<p>SMS Scam Detection Rate</p>
+<small class="source">
+  Measured on internal test set of 10,000 labeled messages (Feb 2026).
+  <a href="/methodology">See methodology</a>
+</small>
+If you do not yet have rigorous benchmarks, be honest about it:
+<small class="source">
+  Early benchmark — full evaluation in progress.
+</small>
+This honesty actually increases trust rather than decreasing it.
+ACCEPTANCE CRITERIA
+* The detection rate stat includes at minimum: what type of scam it applies to, the approximate dataset size, and the date it was measured.
+* A link to a methodology page or note explaining the measurement approach is present.
+
+
+ISSUE 9 — NO SOCIAL PROOF
+Severity: MAJOR — Credibility
+Category: Credibility
+
+
+WHAT IT IS
+The site has zero social proof: no testimonials, no user count, no partner logos, no hackathon wins, no press coverage, no GitHub stars. For a security product, this means there is no external validation that anyone has tried or trusted it.
+EXACT SOLUTION
+Add a social proof section between the stats and the features. Choose whichever of these applies:
+Option A — User testimonials (most powerful):
+<section id="testimonials">
+  <h2>What People Are Saying</h2>
+  <div class="testimonial">
+    <p>"I received a fake KYC message and Sentinel flagged it as high-risk
+    immediately. Saved me from losing money."</p>
+    <span>— Ravi S., Pune (beta tester)</span>
+  </div>
+</section>
+
+
+Option B — Usage counter (if you have real numbers):
+<div class="social-proof-bar">
+  <span>Trusted by <strong>2,400+ users</strong> across India</span>
+  <span>|</span>
+  <span><strong>18,000+ messages</strong> scanned</span>
+</div>
+
+
+Option C — Hackathon / institution badge:
+<div class="badge">
+  🏆 Built at [Hackathon Name] 2026 — [Award if any]
+</div>
+ACCEPTANCE CRITERIA
+* At least one form of social proof is present on the page.
+* Social proof is positioned between the hero/stats and the features section.
+
+
+ISSUE 10 — TEAM CARDS SHOW INITIALS INSTEAD OF PHOTOS
+Severity: MAJOR — Trust / Humanization
+Category: Trust
+
+
+WHAT IT IS
+The team section displays colored circles with initials (JO, AS, MB) instead of actual profile photos. For a security product, humanizing the team is critical. Initials look like placeholder design and signal the site is incomplete.
+EXACT SOLUTION
+Replace the initials avatars with real headshot images. Even casual photos work:
+<!-- BEFORE -->
+<div class="avatar-initials">JO</div>
+
+
+<!-- AFTER -->
+<img
+  src="/images/team/jayant.jpg"
+  alt="Jayant Olhyan - Team Leader"
+  class="team-photo"
+  width="80"
+  height="80"
+>
+
+
+CSS for circular photos:
+.team-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #1565C0;
+}
+Also add LinkedIn links to each card:
+<a href="https://linkedin.com/in/jayant-olhyan" target="_blank"
+   rel="noopener noreferrer" aria-label="Jayant Olhyan LinkedIn">
+  LinkedIn
+</a>
+ACCEPTANCE CRITERIA
+* All three team members display a real photograph, not an initials circle.
+* Each photo is circular, cropped correctly, and consistently sized.
+* Each team card links to the member's LinkedIn profile.
+
+
+ISSUE 11 — "INCREDIBLY HIGH ACCURACY" IS VAGUE MARKETING LANGUAGE
+Severity: MAJOR — Credibility
+Category: Credibility
+
+
+WHAT IT IS
+The Deepfake Detector feature card reads: "Advanced AI to identify deepfake videos and manipulated media with incredibly high accuracy." The phrase "incredibly high accuracy" is unscientific, unverifiable, and sounds like marketing copy. Security-conscious users will distrust this immediately.
+EXACT SOLUTION
+Replace the vague phrase with a specific, honest metric:
+<!-- BEFORE -->
+<p>...with incredibly high accuracy.</p>
+
+
+<!-- AFTER — if you have benchmark results -->
+<p>...achieving 94.2% accuracy on the FaceForensics++ benchmark dataset.</p>
+
+
+<!-- AFTER — if you do not yet have benchmarks -->
+<p>...with accuracy benchmarks currently in evaluation (results coming April 2026).</p>
+Being transparent about ongoing evaluation is always better than vague superlatives.
+ACCEPTANCE CRITERIA
+* The phrase "incredibly high accuracy" no longer appears on the page.
+* It is replaced with either a specific percentage or an honest statement about evaluation status.
+
+
+________________
+
+
+ISSUE 12 — NO SMOOTH SCROLL BEHAVIOR
+Severity: MODERATE — UX
+Category: UX
+
+
+WHAT IT IS
+Anchor link navigation causes instant jumps to sections instead of smooth animated scrolling. This feels jarring and low-quality.
+EXACT SOLUTION
+Add one line to your global CSS file:
+html {
+  scroll-behavior: smooth;
+}
+For more control (e.g., custom easing), use JavaScript:
+document.querySelectorAll("a[href^='#']").forEach(anchor => {
+  anchor.addEventListener("click", function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute("href"));
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+ACCEPTANCE CRITERIA
+* Clicking any anchor link produces a smooth animated scroll instead of an instant jump.
+
+
+ISSUE 13 — NO ACTIVE STATE ON NAV LINKS WHILE SCROLLING
+Severity: MODERATE — UX
+Category: UX
+
+
+WHAT IT IS
+As the user scrolls down the page, the navbar gives no indication of which section is currently in view. Active navigation highlighting is standard on professional single-page sites and greatly improves orientation.
+EXACT SOLUTION
+Use the Intersection Observer API:
+const sections = document.querySelectorAll("section[id]");
+const navLinks = document.querySelectorAll("nav a[href^='#']");
+
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(link => link.classList.remove("active"));
+      const activeLink = document.querySelector(
+        `nav a[href="#${entry.target.id}"]`
+      );
+      if (activeLink) activeLink.classList.add("active");
+    }
+  });
+}, { threshold: 0.4 });
+
+
+sections.forEach(s => observer.observe(s));
+Add CSS for the active state:
+nav a.active {
+  color: #1565C0;
+  border-bottom: 2px solid #1565C0;
+  font-weight: 600;
+}
+ACCEPTANCE CRITERIA
+* As the user scrolls to each section, the corresponding nav link is highlighted.
+* Only one nav link is highlighted at a time.
+
+
+ISSUE 14 — HERO SECTION HAS NO VISUAL ELEMENT
+Severity: MODERATE — Design
+Category: Design
+
+
+WHAT IT IS
+The hero section is plain text on a background. There is no illustration, animation, screenshot, or graphic to visually communicate what the product does. High-impact products use a visual hero.
+EXACT SOLUTION
+Option A — Lottie animation (free, lightweight, high quality). Use a shield or security scan animation from lottiefiles.com:
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<lottie-player
+  src="https://assets.lottiefiles.com/packages/lf20_shield.json"
+  background="transparent"
+  speed="1"
+  style="width:300px; height:300px;"
+  loop autoplay>
+</lottie-player>
+
+
+Option B — Product mockup screenshot: Take a screenshot of the scanner UI with a sample result showing "High Risk Detected" and place it as an image in the hero:
+<img
+  src="/images/hero-mockup.png"
+  alt="Sentinel AI scanner showing a high-risk SMS detection result"
+  class="hero-mockup"
+>
+ACCEPTANCE CRITERIA
+* The hero section includes at least one visual element: animation, illustration, or mockup.
+* The visual is relevant to the product (security, scanning, protection theme).
+
+
+ISSUE 15 — SCANNER HAS NO PLACEHOLDER TEXT OR EXAMPLE
+Severity: MODERATE — UX
+Category: UX
+
+
+WHAT IT IS
+The scanner textarea is blank with no guidance. New users do not know what to paste into it. There is no sample input or example to demonstrate the product.
+EXACT SOLUTION
+Add descriptive placeholder text to the textarea:
+<textarea
+  id="scanner-input"
+  placeholder="Paste a suspicious SMS, WhatsApp message, bank alert, or email here...
+Example: 'URGENT: Your account has been blocked. Verify at http://sbi-login.xyz'"
+  rows="6"
+>
+</textarea>
+Add a "Try an Example" button nearby:
+<button class="example-btn" onclick="loadExample()">
+  Try an Example
+</button>
+
+
+function loadExample() {
+  document.getElementById("scanner-input").value =
+    "Dear Customer, Your HDFC account will be suspended. " +
+    "Verify KYC immediately: http://hdfc-kyc-verify.co/login. " +
+    "Failure to comply will result in account closure within 24 hours.";
+}
+ACCEPTANCE CRITERIA
+* The textarea has a meaningful placeholder describing what to paste.
+* A "Try an Example" button exists and pre-fills a realistic scam message.
+
+
+ISSUE 16 — NO KEYBOARD / ARIA ACCESSIBILITY
+Severity: MODERATE — Accessibility
+Category: Accessibility
+
+
+WHAT IT IS
+Interactive elements (tab switcher, buttons, theme toggle) are likely not fully keyboard-navigable or labeled for screen readers. This is an accessibility violation and also required for compliance with WCAG 2.1 AA standards.
+EXACT SOLUTION
+1. Tab switcher — add proper ARIA roles (as shown in Issue 4 solution).
+2. All buttons must have descriptive aria-label if their text is unclear:
+<button aria-label="Analyze message for scam indicators">Analyze</button>
+3. Ensure all interactive elements are keyboard-reachable. Check by pressing Tab through the page — every button, link, and input should receive focus in a logical order.
+4. Add visible focus styles (do not remove outline):
+:focus-visible {
+  outline: 2px solid #1565C0;
+  outline-offset: 3px;
+}
+5. Images need alt text:
+<img src="logo.png" alt="Sentinel AI logo">
+ACCEPTANCE CRITERIA
+* All interactive elements are reachable and operable using only the keyboard.
+* Tab switcher uses role="tablist", role="tab", aria-selected attributes.
+* All buttons have descriptive accessible names.
+* Focus styles are visible on all interactive elements.
+
+
+ISSUE 17 — THEME TOGGLE HAS NO STATE ICON
+Severity: MODERATE — UX
+Category: UX
+
+
+WHAT IT IS
+The dark/light theme toggle just says "Toggle theme". It does not show which mode is currently active, and the preference is not saved across sessions.
+EXACT SOLUTION
+// JavaScript: complete theme toggle with icons and localStorage
+const themeBtn = document.getElementById("theme-toggle");
+const root = document.documentElement;
+
+
+// Load saved theme
+const savedTheme = localStorage.getItem("theme") || "light";
+root.setAttribute("data-theme", savedTheme);
+themeBtn.textContent = savedTheme === "dark" ? "☀️ Light" : "🌙 Dark";
+
+
+themeBtn.addEventListener("click", () => {
+  const current = root.getAttribute("data-theme");
+  const next = current === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
+  themeBtn.textContent = next === "dark" ? "☀️ Light" : "🌙 Dark";
+});
+ACCEPTANCE CRITERIA
+* Theme toggle button shows ☀️ when in dark mode and 🌙 when in light mode.
+* User's theme preference persists after page refresh.
+
+
+________________
+
+
+ISSUE 18 — MISSING META DESCRIPTION
+Severity: MINOR — SEO
+Category: SEO
+
+
+WHAT IT IS
+The <head> section is missing a meta description tag. Without it, Google auto-generates a snippet that is often awkward, off-topic, or cut off. This reduces click-through rates from search results.
+EXACT SOLUTION
+Add inside the <head> tag:
+<meta name="description" content="Sentinel AI detects SMS scams, voice fraud,
+deepfakes, and malicious URLs in real-time using advanced AI. Built to protect
+India's digital citizens from online fraud.">
+Keep the description between 150–160 characters for optimal search display.
+ACCEPTANCE CRITERIA
+* A meta description tag exists in the <head> with 150-160 characters of meaningful content.
+
+
+ISSUE 19 — MISSING OPEN GRAPH TAGS
+Severity: MINOR — SEO / Social Sharing
+Category: SEO / Sharing
+
+
+WHAT IT IS
+When the URL is shared on WhatsApp, Twitter/X, or LinkedIn, it renders as a plain text link with no preview image, title, or description. Open Graph meta tags control this preview and are currently absent.
+EXACT SOLUTION
+Add all of these inside the <head> tag:
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="Sentinel AI — Real-Time Scam Detection">
+<meta property="og:description" content="Protect yourself from SMS scams, deepfakes,
+and voice fraud with AI. Built for India.">
+<meta property="og:url"         content="https://sentinel-ai-1.netlify.app">
+<meta property="og:image"       content="https://sentinel-ai-1.netlify.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="Sentinel AI — Real-Time Scam Detection">
+<meta name="twitter:description" content="AI-powered scam protection for India.">
+<meta name="twitter:image"       content="https://sentinel-ai-1.netlify.app/og-image.png">
+Also create an og-image.png file: 1200 x 630 pixels, showing the Sentinel AI logo and tagline. Place it at the root of the public folder.
+ACCEPTANCE CRITERIA
+* All og: and twitter: meta tags are present in <head>.
+* og-image.png exists at the specified URL, is 1200x630px, and contains branding.
+* Sharing the URL on WhatsApp shows a rich preview with image and description.
+
+
+ISSUE 20 — MISSING FAVICON
+Severity: MINOR — Branding
+Category: Branding
+
+
+WHAT IT IS
+The browser tab shows a generic blank or default icon instead of the Sentinel AI brand icon. This makes the site look unfinished in browser tabs and bookmarks.
+EXACT SOLUTION
+Step 1: Create a favicon. Use the Sentinel AI logo or shield icon, exported as:
+* favicon.ico — 32x32 pixels (for legacy browsers)
+* favicon-192.png — 192x192 pixels (for Android)
+* apple-touch-icon.png — 180x180 pixels (for iOS)
+Step 2: Add to <head>:
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+ACCEPTANCE CRITERIA
+* The browser tab shows the Sentinel AI logo icon when visiting the site.
+
+
+ISSUE 21 — NO robots.txt OR sitemap.xml
+Severity: MINOR — SEO
+Category: SEO
+
+
+WHAT IT IS
+Without a robots.txt and sitemap.xml, search engine crawlers have no instructions on how to index the site, which slows down and reduces quality of search engine visibility.
+EXACT SOLUTION
+Create /public/robots.txt with:
+User-agent: *
+Allow: /
+Disallow: /api/
+Sitemap: https://sentinel-ai-1.netlify.app/sitemap.xml
+
+
+Create /public/sitemap.xml with:
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://sentinel-ai-1.netlify.app/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://sentinel-ai-1.netlify.app/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://sentinel-ai-1.netlify.app/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>
+ACCEPTANCE CRITERIA
+* https://sentinel-ai-1.netlify.app/robots.txt returns a valid robots file.
+* https://sentinel-ai-1.netlify.app/sitemap.xml returns a valid sitemap listing all pages.
+
+
+ISSUE 22 — "CHECK CALL" HAS NO UI OR COMING SOON STATE
+Severity: MINOR — UX
+Category: UX
+
+
+WHAT IT IS
+"Check Call" is featured in the hero, implying users can upload calls for analysis. But there is no UI for it. Users who click it have no idea if this is a planned feature or a broken one.
+EXACT SOLUTION
+If not yet built, add a "Coming Soon" badge to the button and show a tooltip or modal:
+<button id="btn-check-call" class="hero-btn coming-soon"
+  onclick="showComingSoon()">
+  Check Call
+  <span class="badge">Coming Soon</span>
+</button>
+
+
+function showComingSoon() {
+  const modal = document.getElementById("coming-soon-modal");
+  modal.innerHTML = `
+    <div class="modal-box">
+      <h3>Voice Scam Detection — Coming Soon</h3>
+      <p>Upload call recordings to detect AI-generated voices,
+      impersonation, and social engineering in real time.</p>
+      <p>Leave your email to get notified when it launches:</p>
+      <input type="email" placeholder="your@email.com">
+      <button onclick="notifyMe()">Notify Me</button>
+      <button onclick="this.closest('.modal-box').parentNode.innerHTML=''">Close</button>
+    </div>
+  `;
+  modal.style.display = "flex";
+}
+ACCEPTANCE CRITERIA
+* The Check Call button has a visible "Coming Soon" badge if unimplemented.
+* Clicking it shows an informative modal, not silent no-op behavior.
+* The modal includes a waitlist email capture field.
+
+
+ISSUE 23 — NO CUSTOM 404 PAGE
+Severity: MINOR — UX
+Category: UX
+
+
+WHAT IT IS
+Visiting a non-existent URL (e.g., /about, /login, /admin) likely shows Netlify's generic 404 page, which breaks the brand experience and gives users no path forward.
+EXACT SOLUTION
+Create a /public/404.html file with full site branding:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Page Not Found — Sentinel AI</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <nav><!-- same as main site nav --></nav>
+  <main style="text-align:center; padding:80px 20px;">
+    <h1>404 — Page Not Found</h1>
+    <p>The page you're looking for doesn't exist or has moved.</p>
+    <a href="/" class="btn-primary">Go Back Home</a>
+  </main>
+</body>
+</html>
+Netlify automatically serves 404.html for unknown routes — no configuration needed.
+ACCEPTANCE CRITERIA
+* Navigating to /any-random-path shows the custom 404 page with Sentinel AI branding.
+* The 404 page includes a "Go Back Home" button.
+
+
+ISSUE 24 — COPYRIGHT YEAR FORMAT
+Severity: MINOR — Branding
+Category: Branding
+
+
+WHAT IT IS
+The footer displays "© 2026 Sentinel AI" which looks like a static value that someone forgot to update. Best practice is to show founding year through current year.
+EXACT SOLUTION
+Use JavaScript to dynamically render the copyright range:
+<footer>
+  <p id="copyright"></p>
+</footer>
+
+
+<script>
+  const founded = 2025;
+  const now = new Date().getFullYear();
+  const range = now > founded ? `${founded}–${now}` : `${founded}`;
+  document.getElementById("copyright").textContent =
+    `© ${range} Sentinel AI. All rights reserved. Built with ❤️ in India.`;
+</script>
+ACCEPTANCE CRITERIA
+* Footer displays "© 2025–2026 Sentinel AI" (or current year range dynamically).
+
+
+________________
+
+
+SECTION Z — IMPLEMENTATION PRIORITY ORDER
+The AI should implement fixes in the following order for maximum impact:
+
+
+1. ISSUE 3 — Fix the Analyze button (core product functionality)
+2. ISSUE 1 — Fix all navigation links
+3. ISSUE 2 — Wire CTA buttons to page sections
+4. ISSUE 5 — Fix all footer links
+5. ISSUE 4 — Fix the Image tab
+6. ISSUE 6 — Add contact section with Netlify form
+7. ISSUE 7 — Add source citations to statistics
+8. ISSUE 8 — Contextualize the detection rate metric
+9. ISSUE 10 — Add real team photos
+10. ISSUE 11 — Replace vague accuracy language
+11. ISSUE 15 — Add scanner placeholder and example button
+12. ISSUE 17 — Fix theme toggle with icons and localStorage
+13. ISSUE 12 — Add smooth scroll CSS
+14. ISSUE 13 — Add active nav link on scroll
+15. ISSUE 14 — Add hero visual/animation
+16. ISSUE 16 — Add ARIA accessibility attributes
+17. ISSUE 22 — Add Coming Soon modal to Check Call button
+18. ISSUE 18 — Add meta description
+19. ISSUE 19 — Add Open Graph tags and og-image
+20. ISSUE 20 — Add favicon
+21. ISSUE 21 — Add robots.txt and sitemap.xml
+22. ISSUE 23 — Create custom 404 page
+23. ISSUE 24 — Fix copyright year with dynamic JS
+24. ISSUE 9 — Add social proof (testimonials or user counter)
+
+
+
+
+— END OF DOCUMENT —
+Generated for Sentinel AI — March 2026

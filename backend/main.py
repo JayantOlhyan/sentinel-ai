@@ -87,7 +87,7 @@ async def analyze_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
         image_data = await file.read()
-        image_part = {"mime_type": file.content_type, "data": image_data}
+        image_part = types.Part.from_bytes(data=image_data, mime_type=file.content_type)
         prompt = "Analyze this image for scams, QR frauds, or deepfake manipulation."
         response = client.models.generate_content(
             model='gemini-2.0-flash',
@@ -129,7 +129,7 @@ async def analyze_audio(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
         audio_data = await file.read()
-        audio_part = {"mime_type": file.content_type or "audio/webm", "data": audio_data}
+        audio_part = types.Part.from_bytes(data=audio_data, mime_type=file.content_type or "audio/webm")
         audio_prompt = "Transcribe and analyze this audio for scams. Populate the transcript field."
         response = client.models.generate_content(
             model='gemini-2.0-flash',
@@ -151,7 +151,7 @@ async def analyze_audio_live(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Gemini API key not configured.")
     try:
         audio_data = await file.read()
-        audio_part = {"mime_type": file.content_type or "audio/webm", "data": audio_data}
+        audio_part = types.Part.from_bytes(data=audio_data, mime_type=file.content_type or "audio/webm")
         disruption_prompt = "Short 5s chunk analysis. Transcribe and flag for active scams."
         response = client.models.generate_content(
             model='gemini-2.0-flash',

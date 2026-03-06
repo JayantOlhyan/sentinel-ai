@@ -2,6 +2,7 @@
 
 @layer base {
   :root {
+    scroll-behavior: smooth;
     --color-base-bg: #faf5ff;
     /* soft purple-tinted white */
     --color-base-panel: #ffffff;
@@ -106,4 +107,34 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-base-muted);
+}
+
+.source {
+  font-size: 11px;
+  color: #9E9E9E;
+  display: block;
+  margin-top: 4px;
+}
+
+.source a {
+  color: #1565C0;
+  text-decoration: underline;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }

@@ -15,7 +15,23 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Sentinel AI",
-  description: "AI-Powered Scam Detection",
+  description: "Sentinel AI uses advanced machine learning to protect you from SMS phishing, voice scams, and fraudulent URLs. Real-time security for the modern digital citizen.",
+  openGraph: {
+    title: 'Sentinel AI | AI-Powered Scam Protection',
+    description: 'Protect yourself from digital fraud in real-time with Sentinel AI.',
+    url: 'https://sentinel-ai-1.netlify.app',
+    siteName: 'Sentinel AI',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Sentinel AI Preview',
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

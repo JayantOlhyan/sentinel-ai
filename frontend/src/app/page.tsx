@@ -741,7 +741,7 @@ export default function Home() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="Enter URL to check... (e.g., https://onlinesbi-kyc-verify.com)"
-                    className="w-full py-4 text-xl font-medium bg-transparent border-none focus:outline-none text-[var(--color-base-text)] placeholder-[var(--color-base-muted)]"
+                    className="w-full py-4 pl-14 text-xl font-medium bg-transparent border-none focus:outline-none text-[var(--color-base-text)] placeholder-[var(--color-base-muted)]"
                   />
                 </div>
                 <div className="flex gap-3">
@@ -996,7 +996,7 @@ export default function Home() {
                           onClick={isLiveMonitoring ? stopLiveMonitoring : startLiveMonitoring}
                           className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 shadow-sm ${isLiveMonitoring ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100'}`}
                         >
-                          {isLiveMonitoring ? <><Square className="w-4 h-4 fill-current" /> Stop</> : <><Mic className="w-4 h-4" /> Start Monitor</>}
+                          {isLiveMonitoring ? <><Square className="w-4 h-4 fill-current" /> Stop Monitoring</> : <><Mic className="w-4 h-4" /> Start Monitoring</>}
                         </button>
                       </div>
                       <div className="bg-[var(--color-base-panel)] rounded-2xl p-6 min-h-[120px] border border-[var(--color-base-border)] font-medium text-[var(--color-base-text)] shadow-sm">

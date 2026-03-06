@@ -58,6 +58,16 @@ Analyze provided context (SMS, image, or audio) for potential threats common in 
 Identify UPI Fraud, KYC/Banking scams, Government/Utility impersonation, and Vishing.
 """
 
+# Helper to clean Pydantic schema for Google AI compatibility
+def get_clean_schema(model):
+    schema = model.model_json_schema()
+    # Remove title which causes "title parameter is not supported" error
+    schema.pop("title", None)
+    if "properties" in schema:
+        for prop in schema["properties"].values():
+            prop.pop("title", None)
+    return schema
+
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "Sentinel AI API is running"}
@@ -73,7 +83,7 @@ async def analyze_message(request: AnalyzeRequest):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema=AnalyzeResponse.model_json_schema(),
+                response_schema=get_clean_schema(AnalyzeResponse),
                 temperature=0.1,
             ),
         )
@@ -95,7 +105,7 @@ async def analyze_image(file: UploadFile = File(...)):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema=AnalyzeResponse.model_json_schema(),
+                response_schema=get_clean_schema(AnalyzeResponse),
                 temperature=0.1,
             ),
         )
@@ -115,7 +125,7 @@ async def analyze_url(request: AnalyzeUrlRequest):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema=AnalyzeResponse.model_json_schema(),
+                response_schema=get_clean_schema(AnalyzeResponse),
                 temperature=0.1,
             ),
         )
@@ -137,7 +147,7 @@ async def analyze_audio(file: UploadFile = File(...)):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema=AnalyzeResponse.model_json_schema(),
+                response_schema=get_clean_schema(AnalyzeResponse),
                 temperature=0.1,
             ),
         )
@@ -159,7 +169,7 @@ async def analyze_audio_live(file: UploadFile = File(...)):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema=AnalyzeResponse.model_json_schema(),
+                response_schema=get_clean_schema(AnalyzeResponse),
                 temperature=0.1,
             ),
         )
@@ -179,7 +189,7 @@ async def analyze_live(request: AnalyzeLiveRequest):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                response_schema=AnalyzeResponse.model_json_schema(),
+                response_schema=get_clean_schema(AnalyzeResponse),
                 temperature=0.1,
             ),
         )

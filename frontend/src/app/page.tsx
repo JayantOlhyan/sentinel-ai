@@ -392,13 +392,19 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        throw new Error('Analysis failed. Is the backend running locally on port 8000?');
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error occurred' }));
+        throw new Error(errorData.detail || `Server returned ${response.status}: Analysis failed.`);
       }
 
       const data: AnalyzeResponse = await response.json();
       setResult(data);
     } catch (err: any) {
-      setError(err.message || 'An error occurred during analysis.');
+      console.error("Analysis Error:", err);
+      if (err.message.includes('fetch') || err.name === 'TypeError') {
+        setError(`Cannot connect to backend at ${API_URL}. Please ensure the server is running and configured correctly.`);
+      } else {
+        setError(err.message || 'An error occurred during analysis.');
+      }
     } finally {
       setIsAnalyzing(false);
     }

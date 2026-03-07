@@ -1349,7 +1349,10 @@ export default function Home() {
         </div>
 
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between pt-8 border-t border-[var(--color-base-border)] text-sm font-medium text-[var(--color-base-muted)] gap-4">
-          <p>© {new Date().getFullYear()} Sentinel AI. All rights reserved. Built with ❤️ in India.</p>
+          <div className="flex flex-col items-center sm:items-start truncate max-w-[250px]">
+            <p>© {new Date().getFullYear()} Sentinel AI. All rights reserved.</p>
+            <p className="text-[10px] opacity-40 truncate w-full">API: {API_URL}</p>
+          </div>
           <div className="flex gap-6">
             <a href="/disclaimer" className="hover:text-[var(--color-base-text)] transition-colors">Disclaimer</a>
             <a href="/cookies" className="hover:text-[var(--color-base-text)] transition-colors">Cookie Policy</a>
